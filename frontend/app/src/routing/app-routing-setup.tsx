@@ -4,6 +4,7 @@ import { Layout14Page } from '@/pages/layout-14/page';
 import { LoginPage } from '@/pages/login/page';
 import { SignUpPage } from '@/pages/signup/page';
 import { ForgotPasswordPage } from '@/pages/forgot-password/page';
+import { CreateCondominiumPage } from '@/pages/create-condominium/page';
 import { RequireAuth } from '@/auth/require-auth';
 
 export function AppRoutingSetup() {
@@ -14,8 +15,17 @@ export function AppRoutingSetup() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       <Route
+        path="/create-condominium"
         element={
-          <RequireAuth>
+          <RequireAuth condominiumPolicy="forbid">
+            <CreateCondominiumPage />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        element={
+          <RequireAuth condominiumPolicy="require">
             <Layout14 />
           </RequireAuth>
         }
