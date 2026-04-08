@@ -54,6 +54,11 @@ type Condominium = {
   updated_at: string;
 };
 
+type UnitListResponse = {
+  data: Array<{ id: number }> | null;
+  total: number;
+};
+
 function formatPhone(value?: string | null) {
   if (!value) return 'Não informado';
 
@@ -253,9 +258,11 @@ export function CondominiumDetailPage() {
         setError(null);
 
         const token = await getToken();
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${code}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const [response, unitsResponse] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${code}`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${code}/units`, { headers }),
+        ]);
 
         if (response.status === 404) {
           navigate('/condominiums', { replace: true });
@@ -267,9 +274,18 @@ export function CondominiumDetailPage() {
         }
 
         const json = (await response.json()) as Condominium;
+        let resolvedTotalUnits = json.total_units ?? null;
+        if (resolvedTotalUnits == null && unitsResponse.ok) {
+          const unitsJson = (await unitsResponse.json()) as UnitListResponse;
+          resolvedTotalUnits = unitsJson.total ?? (Array.isArray(unitsJson.data) ? unitsJson.data.length : null);
+        }
+
         if (mounted) {
           selectCondominium(json.code);
-          setData(json);
+          setData({
+            ...json,
+            total_units: resolvedTotalUnits,
+          });
           setFeeRuleDraft(json.fee_rule === 'proportional' ? 'proportional' : 'equal');
           setLandAreaDraft(toAreaInputValue(json.land_area));
         }
@@ -518,7 +534,7 @@ export function CondominiumDetailPage() {
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-border bg-muted/30 p-4">
-                    <div className="text-sm text-muted-foreground">Unidades</div>
+                    <div className="text-sm text-muted-foreground">Total de Unidades</div>
                     <div className="mt-2 text-xl font-semibold">{formatNumber(data?.total_units)}</div>
                   </div>
                   <div className="rounded-xl border border-border bg-muted/30 p-4">

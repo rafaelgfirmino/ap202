@@ -2,11 +2,21 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@clerk/react-router';
 import { KTDataTable } from '@keenthemes/ktui';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Pencil, Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 
 type Unit = {
   id: number;
@@ -101,6 +111,8 @@ export function CondominiumUnitsPage() {
   const [editingUnitId, setEditingUnitId] = useState<number | null>(null);
   const [editingArea, setEditingArea] = useState('');
   const [savingAreaId, setSavingAreaId] = useState<number | null>(null);
+  const [deletingUnitId, setDeletingUnitId] = useState<number | null>(null);
+  const [unitPendingDelete, setUnitPendingDelete] = useState<Unit | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [groups, setGroups] = useState<UnitGroup[]>([]);
   const datatableRef = useRef<KTDataTable | null>(null);
@@ -244,6 +256,37 @@ export function CondominiumUnitsPage() {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar a area privativa.');
     } finally {
       setSavingAreaId(null);
+    }
+  }
+
+  async function onDeleteUnit(unitId: number) {
+    setDeletingUnitId(unitId);
+    setError(null);
+
+    try {
+      const token = await getToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${code}/units/${unitId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || 'Falha ao excluir unidade.');
+      }
+
+      setUnits((current) => current.filter((unit) => unit.id !== unitId));
+      if (editingUnitId === unitId) {
+        setEditingUnitId(null);
+        setEditingArea('');
+      }
+      if (unitPendingDelete?.id === unitId) {
+        setUnitPendingDelete(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao excluir unidade.');
+    } finally {
+      setDeletingUnitId(null);
     }
   }
 
@@ -492,6 +535,19 @@ export function CondominiumUnitsPage() {
                           >
                             <Pencil className="size-4" />
                           </button>
+                          <button
+                            id={`condominium-unit-delete-${unit.id}`}
+                            type="button"
+                            className="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setUnitPendingDelete(unit);
+                            }}
+                            disabled={deletingUnitId === unit.id}
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -532,6 +588,49 @@ export function CondominiumUnitsPage() {
           {error}
         </div>
       ) : null}
+
+      <AlertDialog
+        open={unitPendingDelete != null}
+        onOpenChange={(open) => {
+          if (!open && deletingUnitId == null) {
+            setUnitPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent id="condominium-units-delete-dialog-content">
+          <AlertDialogHeader id="condominium-units-delete-dialog-header">
+            <AlertDialogTitle id="condominium-units-delete-dialog-title">
+              Excluir unidade
+            </AlertDialogTitle>
+            <AlertDialogDescription id="condominium-units-delete-dialog-description">
+              {unitPendingDelete
+                ? `Deseja realmente excluir a unidade ${unitPendingDelete.identifier}? Esta ação não pode ser desfeita.`
+                : 'Deseja realmente excluir esta unidade?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter id="condominium-units-delete-dialog-footer">
+            <AlertDialogCancel
+              id="condominium-units-delete-dialog-cancel"
+              disabled={deletingUnitId != null}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              id="condominium-units-delete-dialog-confirm"
+              variant="destructive"
+              disabled={unitPendingDelete == null || deletingUnitId != null}
+              onClick={(event) => {
+                event.preventDefault();
+                if (unitPendingDelete) {
+                  void onDeleteUnit(unitPendingDelete.id);
+                }
+              }}
+            >
+              {deletingUnitId != null ? 'Excluindo...' : 'Excluir unidade'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

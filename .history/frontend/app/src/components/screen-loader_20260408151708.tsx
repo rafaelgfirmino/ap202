@@ -8,11 +8,11 @@ export function ScreenLoader() {
       <img
         id="screen-loader-logo"
         className="h-[30px] w-auto max-w-none"
-        src={toAbsoluteUrl('/media/app/logo.png')}
+        src={toAbsoluteUrl('/media/app/logo2.png')}
         alt="logo"
       />
       <div id="screen-loader-text" className="text-muted-foreground font-medium text-sm">
-        Carregando...
+        Loading...
       </div>
     </div>
   );

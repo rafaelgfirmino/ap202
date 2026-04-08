@@ -130,6 +130,9 @@ export function CondominiumUnitsCreatePage() {
     setError(null);
 
     try {
+      if (!form.group_id) {
+        throw new Error('Selecione um grupo antes de cadastrar a unidade.');
+      }
       const selectedItem = groups.find((item) => String(item.id) === form.group_id);
       const token = await getToken();
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${code}/units`, {
@@ -319,7 +322,7 @@ export function CondominiumUnitsCreatePage() {
                 </div>
               </div>
 
-              <Button id="condominium-units-create-submit" type="submit" variant="primary" disabled={submitting}>
+              <Button id="condominium-units-create-submit" type="submit" variant="primary" disabled={submitting || !form.group_id}>
                 {submitting ? 'Cadastrando unidade...' : 'Cadastrar unidade'}
               </Button>
             </form>

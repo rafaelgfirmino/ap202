@@ -35,15 +35,11 @@ export function HeaderLogo() {
       <div className="flex items-center w-full">
         {/* Logo */}
         <div className="flex items-center justify-center shrink-0 border-e border-border w-(--sidebar-collapsed-width) h-(--header-height) bg-muted">
-          <Link to="/layout-14">
+          <Link id="layout-14-header-logo-link" to="/layout-14" className="p-1.5">
             <img
-              src={toAbsoluteUrl('/media/app/mini-logo-gray.svg')}
-              className="dark:hidden min-h-[30px]"
-              alt="Thunder AI Logo"
-            />
-            <img
-              src={toAbsoluteUrl('/media/app/mini-logo-gray-dark.svg')}
-              className="hidden dark:block min-h-[30px]"
+              id="layout-14-header-logo-image"
+              src={toAbsoluteUrl('/media/app/logo.png')}
+              className="h-[24px] w-auto"
               alt="Thunder AI Logo"
             />
           </Link>
