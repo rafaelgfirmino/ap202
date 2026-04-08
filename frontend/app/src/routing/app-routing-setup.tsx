@@ -6,6 +6,8 @@ import { SignUpPage } from '@/pages/signup/page';
 import { ForgotPasswordPage } from '@/pages/forgot-password/page';
 import { CreateCondominiumPage } from '@/pages/create-condominium/page';
 import { RequireAuth } from '@/auth/require-auth';
+import { CondominiumDetailPage } from '@/pages/condominiums/detail/page';
+import { CondominiumSelectPage } from '@/pages/condominiums/select/page';
 
 export function AppRoutingSetup() {
   return (
@@ -24,6 +26,15 @@ export function AppRoutingSetup() {
       />
 
       <Route
+        path="/select-condominium"
+        element={
+          <RequireAuth condominiumPolicy="skip">
+            <CondominiumSelectPage />
+          </RequireAuth>
+        }
+      />
+
+      <Route
         element={
           <RequireAuth condominiumPolicy="require">
             <Layout14 />
@@ -31,6 +42,8 @@ export function AppRoutingSetup() {
         }
       >
         <Route path="/layout-14" element={<Layout14Page />} />
+        <Route path="/condominiums" element={<Layout14Page />} />
+        <Route path="/condominiums/:code" element={<CondominiumDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/layout-14" replace />} />
     </Routes>

@@ -11,7 +11,7 @@ interface RequireAuthProps extends PropsWithChildren {
 export function RequireAuth({ children, condominiumPolicy = 'require' }: RequireAuthProps) {
   const location = useLocation();
   const { isLoaded, isSignedIn } = useAuth();
-  const { isLoading: checkingCondominium, hasCondominium } = useCondominiumCheck();
+  const { isLoading: checkingCondominium, hasCondominium, condominiumsCount, hasActiveCondominium } = useCondominiumCheck();
 
   if (!isLoaded) {
     return <ScreenLoader />;
@@ -30,8 +30,16 @@ export function RequireAuth({ children, condominiumPolicy = 'require' }: Require
       return <Navigate to="/create-condominium" replace />;
     }
 
+    if (condominiumPolicy === 'require' && hasCondominium && !hasActiveCondominium && condominiumsCount > 1) {
+      return <Navigate to="/select-condominium" replace state={{ from: location }} />;
+    }
+
     if (condominiumPolicy === 'forbid' && hasCondominium) {
-      return <Navigate to="/layout-14" replace />;
+      if (hasActiveCondominium) {
+        return <Navigate to="/layout-14" replace />;
+      }
+
+      return <Navigate to="/select-condominium" replace state={{ from: location }} />;
     }
   }
 

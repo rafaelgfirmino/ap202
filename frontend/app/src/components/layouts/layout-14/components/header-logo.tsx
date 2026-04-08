@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Check, ChevronsUpDown, Gem, Hexagon, Layers2, Menu, PanelRight, Zap } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Check, ChevronsUpDown, Building2, Menu, PanelRight } from 'lucide-react';
 import { useLayout } from './context';
 import {
   Sheet,
@@ -15,47 +15,14 @@ import { SidebarSecondary } from './sidebar-secondary';
 import { toAbsoluteUrl } from '@/lib/helpers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-
-interface Team {
-  icon: React.ElementType;
-  name: string;
-  color: string;
-  members: number;
-}
+import { useCondominiumContext } from '@/contexts/condominium-context';
 
 export function HeaderLogo() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { isMobile, sidebarToggle } = useLayout();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  const teams: Team[] = [
-    {
-      icon: Zap,
-      name: "Thunder AI",
-      color: "bg-teal-600 text-white",
-      members: 8
-    },
-    {
-      icon: Gem,
-      name: "Clarity AI",
-      color: "bg-fuchsia-600 text-white",
-      members: 6
-    },
-    {
-      icon: Hexagon,
-      name: "Lightning AI",
-      color: "bg-yellow-600 text-white",
-      members: 12
-    },
-    {
-      icon: Layers2,
-      name: "Bold AI",
-      color: "bg-blue-600 text-white",
-      members: 4
-    }
-  ];
-
-  const [selectedTeam, setSelectedTeam] = useState<Team>(teams[0]);
+  const { condominiums, activeCondominium, selectCondominium } = useCondominiumContext();
 
   // Close sheet when route changes
   useEffect(() => {
@@ -112,12 +79,12 @@ export function HeaderLogo() {
                 variant="ghost"
                 className="inline-flex text-muted-foreground hover:text-foreground px-1.5 -ms-1.5"
               >
-                <div className={cn("size-6 flex items-center justify-center rounded-md", selectedTeam.color)}>
-                  <selectedTeam.icon className="size-4" />
+                <div className={cn('size-6 flex items-center justify-center rounded-md bg-primary text-primary-foreground')}>
+                  <Building2 className="size-4" />
                 </div>
 
                 <span className="text-mono text-sm font-medium hidden lg:block">
-                  {selectedTeam.name}
+                  {activeCondominium?.name ?? 'Selecionar condomínio'}
                 </span>
                 <ChevronsUpDown className="opacity-100" />
               </Button>
@@ -129,13 +96,23 @@ export function HeaderLogo() {
               sideOffset={10}
               alignOffset={-80}
             >
-              {teams.map((team) => (
-                <DropdownMenuItem key={team.name} onClick={() => setSelectedTeam(team)} data-active={selectedTeam.name === team.name}>
-                  <div className={cn("size-6 rounded-md flex items-center justify-center", team.color)}>
-                    <team.icon className="size-4" />
+              {condominiums.map((condominium) => (
+                <DropdownMenuItem
+                  key={condominium.code}
+                  onClick={() => {
+                    selectCondominium(condominium.code);
+                    navigate(`/condominiums/${condominium.code}`);
+                  }}
+                  data-active={activeCondominium?.code === condominium.code}
+                >
+                  <div className={cn('size-6 rounded-md flex items-center justify-center bg-primary text-primary-foreground')}>
+                    <Building2 className="size-4" />
                   </div>
-                  <span className="text-mono text-sm font-medium">{team.name}</span>
-                  {selectedTeam.name === team.name && (
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-mono text-sm font-medium">{condominium.name}</span>
+                    <span className="text-xs text-muted-foreground">{condominium.code}</span>
+                  </div>
+                  {activeCondominium?.code === condominium.code && (
                     <Check className="ms-auto size-4 text-primary" />
                   )}
                 </DropdownMenuItem>

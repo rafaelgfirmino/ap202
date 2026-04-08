@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { LoadingBarContainer } from 'react-top-loading-bar';
 import { Toaster } from '@/components/ui/sonner';
 import { ClerkProviderWithRouter } from '@/auth/clerk-provider';
+import { CondominiumProvider } from '@/contexts/condominium-context';
 
 const { BASE_URL } = import.meta.env;
 
@@ -22,8 +23,10 @@ export function App() {
         <LoadingBarContainer>
           <BrowserRouter basename={BASE_URL}>
             <ClerkProviderWithRouter>
-              <Toaster />
-              <AppRouting />
+              <CondominiumProvider>
+                <Toaster />
+                <AppRouting />
+              </CondominiumProvider>
             </ClerkProviderWithRouter>
           </BrowserRouter>
         </LoadingBarContainer>

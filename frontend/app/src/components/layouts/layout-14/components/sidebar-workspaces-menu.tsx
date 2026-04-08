@@ -11,9 +11,11 @@ import {
 } from '@/components/ui/accordion-menu';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus } from "lucide-react";
+import { useCondominiumContext } from '@/contexts/condominium-context';
 
 export function SidebarWorkspacesMenu() {
   const { pathname } = useLocation();
+  const { activeCondominium } = useCondominiumContext();
 
   // Memoize matchPath to prevent unnecessary re-renders
   const matchPath = useCallback(
@@ -48,15 +50,22 @@ export function SidebarWorkspacesMenu() {
           </AccordionMenuSubTrigger>
 
           <AccordionMenuSubContent type="single" collapsible parentValue="workspace-trigger">
-            {item.children?.map((child, index) => (
-              <AccordionMenuItem key={index} value={child.path || '#'}>
-                <Link to={child.path || '#'}>
-                  {child.icon && <child.icon />}
-                  <span>{child.title}</span>
-                  {child.badge == 'Pro' && <Badge size="sm" variant="success" appearance="light">{child.badge}</Badge>}
-                </Link>
-              </AccordionMenuItem>
-            ))}
+            {item.children?.map((child, index) => {
+              const resolvedPath =
+                child.title === 'Condomínio' && activeCondominium
+                  ? `/condominiums/${activeCondominium.code}`
+                  : child.path || '#';
+
+              return (
+                <AccordionMenuItem key={index} value={resolvedPath}>
+                  <Link to={resolvedPath}>
+                    {child.icon && <child.icon />}
+                    <span>{child.title}</span>
+                    {child.badge == 'Pro' && <Badge size="sm" variant="success" appearance="light">{child.badge}</Badge>}
+                  </Link>
+                </AccordionMenuItem>
+              );
+            })}
           </AccordionMenuSubContent>
         </AccordionMenuSub>
       ))}
