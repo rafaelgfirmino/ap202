@@ -1,17 +1,27 @@
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/react-router';
 import { useNavigate } from 'react-router-dom';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Building2, MapPin, Phone, Mail, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ScreenLoader } from '@/components/screen-loader';
+import { useCondominiumContext } from '@/contexts/condominium-context';
 
 type Step = 1 | 2;
 
 export function CreateCondominiumPage() {
   const navigate = useNavigate();
   const { getToken } = useAuth();
+  const {
+    activeCondominium,
+    error: condominiumError,
+    hasActiveCondominium,
+    hasCondominium,
+    isLoading: isLoadingCondominiums,
+    selectCondominium,
+  } = useCondominiumContext();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   
   const [formData, setFormData] = useState({
@@ -31,6 +41,21 @@ export function CreateCondominiumPage() {
   
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isLoadingCondominiums) {
+      return;
+    }
+
+    if (hasCondominium && hasActiveCondominium && activeCondominium) {
+      navigate(`/condominiums/${activeCondominium.code}`, { replace: true });
+      return;
+    }
+
+    if (hasCondominium) {
+      navigate('/select-condominium', { replace: true });
+    }
+  }, [activeCondominium, hasActiveCondominium, hasCondominium, isLoadingCondominiums, navigate]);
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -172,6 +197,13 @@ export function CreateCondominiumPage() {
         throw new Error(errorData.message || 'Erro ao criar condomínio');
       }
 
+      const condominium = await response.json() as { code?: string };
+      if (condominium.code) {
+        selectCondominium(condominium.code);
+        navigate(`/condominiums/${condominium.code}`, { replace: true });
+        return;
+      }
+
       navigate('/layout-14', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar condomínio');
@@ -180,25 +212,30 @@ export function CreateCondominiumPage() {
     }
   }
 
+  if (isLoadingCondominiums) {
+    return <ScreenLoader />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-100 py-12 px-6">
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
+    <div id="create-condominium-screen" className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-blue-100 py-12 px-6">
+      <div id="create-condominium-container" className="w-full max-w-2xl mx-auto">
+        <div id="create-condominium-header" className="text-center mb-6">
+          <div id="create-condominium-logo-wrapper" className="flex justify-center mb-4">
             <img 
+              id="create-condominium-logo"
               src="/media/images/ap202_logo.png" 
               alt="AP202" 
               className="h-12"
             />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Bem-vindo ao AP202!</h1>
-          <p className="text-gray-600 max-w-md mx-auto">
+          <h1 id="create-condominium-title" className="text-2xl font-bold text-gray-900 mb-2">Bem-vindo ao AP202!</h1>
+          <p id="create-condominium-subtitle" className="text-gray-600 max-w-md mx-auto">
             Vamos começar configurando o seu condomínio. Este processo é rápido e você poderá 
             gerenciar todas as informações do seu condomínio em um só lugar.
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div id="create-condominium-card" className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Stepper */}
           <div className="bg-gray-50 px-8 py-6">
             <div className="flex items-center justify-center gap-4">
@@ -232,8 +269,8 @@ export function CreateCondominiumPage() {
             </div>
           </div>
 
-          <form onSubmit={onSubmit}>
-            <div className="px-8 py-8">
+          <form id="create-condominium-form" onSubmit={onSubmit}>
+            <div id="create-condominium-form-content" className="px-8 py-8">
               {/* Step 1: Informações Básicas */}
               {currentStep === 1 && (
                 <div className="space-y-6">
@@ -462,15 +499,15 @@ export function CreateCondominiumPage() {
                 </div>
               )}
 
-              {error && (
-                <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {error}
+              {(condominiumError || error) && (
+                <div id="create-condominium-error" className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {condominiumError || error}
                 </div>
               )}
             </div>
 
             {/* Navigation Buttons */}
-            <div className="bg-gray-50 px-8 py-6 flex justify-between items-center border-t">
+            <div id="create-condominium-actions" className="bg-gray-50 px-8 py-6 flex justify-between items-center border-t">
               <Button
                 type="button"
                 variant="ghost"
@@ -505,16 +542,16 @@ export function CreateCondominiumPage() {
         </div>
 
         {/* Informação sobre próximos passos */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 mt-0.5">
+        <div id="create-condominium-next-steps" className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div id="create-condominium-next-steps-content" className="flex items-start gap-3">
+            <div id="create-condominium-next-steps-icon-wrapper" className="flex-shrink-0 mt-0.5">
               <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
             </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-blue-900 mb-1">O que acontece depois?</h3>
-              <p className="text-sm text-blue-800">
+            <div id="create-condominium-next-steps-text" className="flex-1">
+              <h3 id="create-condominium-next-steps-title" className="text-sm font-semibold text-blue-900 mb-1">O que acontece depois?</h3>
+              <p id="create-condominium-next-steps-description" className="text-sm text-blue-800">
                 Após criar o condomínio, você poderá cadastrar unidades, moradores, 
                 configurar áreas comuns e começar a gerenciar todas as atividades do seu condomínio.
               </p>

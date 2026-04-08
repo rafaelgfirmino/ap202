@@ -9,9 +9,13 @@ export function ToolbarMenu() {
   const { pathname } = useLocation();
   const { isActive } = useMenu(pathname);
 
+  if (MENU_TOOLBAR.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="flex items-stretch">
-      <nav className="list-none flex items-stretch gap-2">
+    <div id="layout-14-toolbar-menu" className="flex items-stretch">
+      <nav id="layout-14-toolbar-menu-nav" className="list-none flex items-stretch gap-2">
         {MENU_TOOLBAR.map((item, index) => {
           const active = isActive(item.path);
 
@@ -28,7 +32,7 @@ export function ToolbarMenu() {
               )}
               asChild
             >
-              <Link to={item.path || '#'}>
+              <Link id={`layout-14-toolbar-menu-link-${index}`} to={item.path || '#'}>
                 {item.icon && <item.icon className="mr-2" />}
                 {item.title}
               </Link>

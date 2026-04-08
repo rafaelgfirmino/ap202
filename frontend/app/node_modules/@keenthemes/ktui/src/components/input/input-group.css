@@ -1,0 +1,55 @@
+/**
+ * KTUI - Free & Open-Source Tailwind UI Components by Keenthemes
+ * Copyright 2025 by Keenthemes Inc
+ */
+
+@layer components {
+	/* Base input group styles */
+	.kt-input-group {
+		@apply flex items-stretch relative;
+
+		.kt-input,
+		.kt-select,
+		[data-kt-select-wrapper] {
+			@apply grow z-1;
+		}
+
+		.kt-input-addon:has(+ .kt-input),
+		.kt-input-addon:has(+ .kt-select),
+		.kt-input-addon:has(+ select[data-kt-select]) {
+			@apply rounded-e-none! border-e-0!;
+		}
+
+		.kt-input + .kt-input-addon,
+		.kt-select + .kt-input-addon,
+		[data-kt-select-wrapper] + .kt-input-addon {
+			@apply rounded-s-none! border-s-0!;
+		}
+
+		.kt-input-addon:has(+ .kt-btn) {
+			@apply rounded-e-none!;
+		}
+
+		.kt-input + .kt-btn {
+			@apply rounded-s-none!;
+		}
+
+		.kt-input + .kt-btn.kt-btn-outline {
+			@apply border-s-0!;
+		}
+
+		.kt-btn + .kt-input,
+		.kt-input-addon + .kt-input,
+		.kt-input-addon + .kt-select,
+		select[data-kt-select] + [data-kt-select-wrapper] .kt-select {
+			@apply rounded-s-none!;
+		}
+
+		.kt-input:has(+ .kt-btn),
+		.kt-input:has(+ .kt-input-addon),
+		.kt-select:has(+ .kt-input-addon),
+		[data-kt-select-wrapper]:has(+ .kt-input-addon) .kt-select {
+			@apply rounded-e-none!;
+		}
+	}
+}

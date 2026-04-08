@@ -1,13 +1,16 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/react-router';
-import { Lock, PencilLine } from 'lucide-react';
+import { CircleHelp, Lock, PencilLine } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCondominiumContext } from '@/contexts/condominium-context';
 import { cn } from '@/lib/utils';
 
@@ -148,12 +151,34 @@ function formatNumber(value?: number | null) {
   return new Intl.NumberFormat('pt-BR').format(value);
 }
 
+function toAreaInputValue(value?: number | null) {
+  if (value == null) {
+    return '';
+  }
+
+  return String(value).replace('.', ',');
+}
+
+function parseAreaInput(value: string) {
+  const normalized = value.trim().replace(/\s+/g, '').replace(',', '.');
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    throw new Error('Informe uma área válida maior ou igual a zero.');
+  }
+
+  return parsed;
+}
+
 function Field({
   label,
   value,
   className,
 }: {
-  label: string;
+  label: ReactNode;
   value: ReactNode;
   className?: string;
 }) {
@@ -213,6 +238,11 @@ export function CondominiumDetailPage() {
   const [data, setData] = useState<Condominium | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingRateio, setEditingRateio] = useState(false);
+  const [savingRateio, setSavingRateio] = useState(false);
+  const [rateioError, setRateioError] = useState<string | null>(null);
+  const [feeRuleDraft, setFeeRuleDraft] = useState<'equal' | 'proportional'>('equal');
+  const [landAreaDraft, setLandAreaDraft] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -240,6 +270,8 @@ export function CondominiumDetailPage() {
         if (mounted) {
           selectCondominium(json.code);
           setData(json);
+          setFeeRuleDraft(json.fee_rule === 'proportional' ? 'proportional' : 'equal');
+          setLandAreaDraft(toAreaInputValue(json.land_area));
         }
       } catch (err) {
         if (mounted) {
@@ -261,10 +293,69 @@ export function CondominiumDetailPage() {
 
   const showEqualFeeHint = data?.fee_rule === 'equal';
 
+  async function saveRateioSettings() {
+    if (!data) {
+      return;
+    }
+
+    setSavingRateio(true);
+    setRateioError(null);
+
+    try {
+      const token = await getToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const parsedLandArea = parseAreaInput(landAreaDraft);
+
+      if (parsedLandArea !== data.land_area) {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${data.code}/land-area`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ land_area: parsedLandArea }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          throw new Error(payload?.message || 'Falha ao atualizar a área do terreno.');
+        }
+
+        const updated = (await response.json()) as Condominium;
+        setData(updated);
+      }
+
+      if (feeRuleDraft !== data.fee_rule) {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/condominiums/${data.code}/fee-rule`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ fee_rule: feeRuleDraft }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          throw new Error(payload?.message || 'Falha ao atualizar a regra de rateio.');
+        }
+
+        const updated = (await response.json()) as Condominium;
+        setData(updated);
+        setFeeRuleDraft(updated.fee_rule === 'proportional' ? 'proportional' : 'equal');
+        setLandAreaDraft(toAreaInputValue(updated.land_area));
+      }
+
+      setEditingRateio(false);
+    } catch (err) {
+      setRateioError(err instanceof Error ? err.message : 'Erro ao salvar as configurações de rateio.');
+    } finally {
+      setSavingRateio(false);
+    }
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3">
+    <div id="condominium-detail-page" className="space-y-5">
+      <div id="condominium-detail-header" className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div id="condominium-detail-title-block" className="space-y-3">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -279,7 +370,7 @@ export function CondominiumDetailPage() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div id="condominium-detail-heading" className="flex flex-wrap items-center gap-3">
             {loading ? (
               <Skeleton className="h-8 w-72" />
             ) : (
@@ -305,10 +396,11 @@ export function CondominiumDetailPage() {
           )}
         </div>
 
-        <Button variant="primary" className="w-full lg:w-auto" disabled>
-          <PencilLine />
-          Editar
-        </Button>
+        <div id="condominium-detail-actions" className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+          <Button id="condominium-detail-units-button" asChild variant="outline" className="w-full lg:w-auto">
+            <Link to={`/condominiums/${code}/units`}>Unidades</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_1fr]">
@@ -446,11 +538,31 @@ export function CondominiumDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="condominium-detail-rateio-card">
             <CardHeader>
-              <CardTitle>Rateio e áreas</CardTitle>
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle>Rateio e áreas</CardTitle>
+                <Button
+                  id="condominium-detail-edit-rateio-button"
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    if (!data) {
+                      return;
+                    }
+                    setFeeRuleDraft(data.fee_rule === 'proportional' ? 'proportional' : 'equal');
+                    setLandAreaDraft(toAreaInputValue(data.land_area));
+                    setRateioError(null);
+                    setEditingRateio((current) => !current);
+                  }}
+                  disabled={loading}
+                >
+                  <PencilLine />
+                  {editingRateio ? 'Fechar edição' : 'Editar rateio'}
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent id="condominium-detail-rateio-content">
               {loading ? (
                 <div className="grid gap-4">
                   <Skeleton className="h-12 w-full" />
@@ -460,9 +572,89 @@ export function CondominiumDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-5">
+                  {editingRateio ? (
+                    <div id="condominium-detail-rateio-editor" className="space-y-5 rounded-xl border border-border bg-muted/20 p-4">
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div id="condominium-detail-fee-rule-editor" className="space-y-1.5">
+                          <div className="text-sm text-muted-foreground">Regra de rateio</div>
+                          <Select value={feeRuleDraft} onValueChange={(value) => setFeeRuleDraft(value as 'equal' | 'proportional')}>
+                            <SelectTrigger id="condominium-detail-fee-rule-input">
+                              <SelectValue placeholder="Selecione a regra" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="equal">Igualitário</SelectItem>
+                              <SelectItem value="proportional">Proporcional</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div id="condominium-detail-land-area-editor" className="space-y-1.5">
+                          <div className="text-sm text-muted-foreground">Área do terreno</div>
+                          <Input
+                            id="condominium-detail-land-area-input"
+                            value={landAreaDraft}
+                            onChange={(event) => setLandAreaDraft(event.target.value)}
+                            placeholder="Ex: 1200,50"
+                          />
+                        </div>
+                      </div>
+
+                      <div id="condominium-detail-rateio-editor-help" className="text-sm text-muted-foreground">
+                        A área construída é recalculada automaticamente a partir da área privativa das unidades.
+                      </div>
+
+                      <div id="condominium-detail-rateio-editor-actions" className="flex flex-col gap-3 sm:flex-row">
+                        <Button id="condominium-detail-rateio-save-button" variant="primary" onClick={saveRateioSettings} disabled={savingRateio}>
+                          {savingRateio ? 'Salvando...' : 'Salvar rateio'}
+                        </Button>
+                        <Button
+                          id="condominium-detail-rateio-cancel-button"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingRateio(false);
+                            setRateioError(null);
+                            setFeeRuleDraft(data?.fee_rule === 'proportional' ? 'proportional' : 'equal');
+                            setLandAreaDraft(toAreaInputValue(data?.land_area));
+                          }}
+                          disabled={savingRateio}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+
+                      {rateioError && (
+                        <div id="condominium-detail-rateio-error" className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                          {rateioError}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
                   <Field label="Regra de rateio" value={<FeeRuleBadge feeRule={data?.fee_rule} />} />
                   <Field label="Área do terreno" value={formatArea(data?.land_area)} />
-                  <Field label="Área construída" value={formatBuiltArea(data?.built_area_sum)} />
+                  <Field
+                    label={
+                      <span className="inline-flex items-center gap-1.5">
+                        Área construída
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              id="condominium-detail-built-area-tooltip-trigger"
+                              type="button"
+                              className="inline-flex items-center text-muted-foreground transition-colors hover:text-foreground"
+                              aria-label="Explicação sobre área construída"
+                            >
+                              <CircleHelp className="size-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent id="condominium-detail-built-area-tooltip" side="top" variant="light">
+                            Soma automática das áreas privativas das unidades ativas.
+                          </TooltipContent>
+                        </Tooltip>
+                      </span>
+                    }
+                    value={formatBuiltArea(data?.built_area_sum)}
+                  />
                   <Field
                     label="Fracao ideal"
                     value={
@@ -473,10 +665,18 @@ export function CondominiumDetailPage() {
                   />
 
                   {showEqualFeeHint && (
-                    <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                      Para usar rateio proporcional informe a área do terreno e a área privativa de cada unidade.
+                    <div id="condominium-detail-rateio-hint" className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                      Para usar rateio proporcional informe a área privativa de cada unidade. A fração ideal é calculada pela proporção entre as áreas privativas.
                     </div>
                   )}
+
+                  <div id="condominium-detail-rateio-units-link" className="rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                    As áreas privativas são cadastradas por unidade.
+                    {' '}
+                    <Link className="font-medium text-primary underline underline-offset-4" to={`/condominiums/${code}/units`}>
+                      Abrir unidades
+                    </Link>
+                  </div>
                 </div>
               )}
             </CardContent>

@@ -1,0 +1,49 @@
+/**
+ * KTUI - Free & Open-Source Tailwind UI Components by Keenthemes
+ * Copyright 2025 by Keenthemes Inc
+ */
+
+@custom-variant kt-stepper-first {
+	[data-kt-stepper-initialized].first & {
+		@slot;
+	}
+}
+
+@custom-variant kt-stepper-between {
+	[data-kt-stepper-initialized].between & {
+		@slot;
+	}
+}
+
+@custom-variant kt-stepper-last {
+	[data-kt-stepper-initialized].last & {
+		@slot;
+	}
+}
+
+@custom-variant kt-stepper-item-active {
+	&[data-kt-stepper-item].active {
+		@slot;
+	}
+	[data-kt-stepper-item].active & {
+		@slot;
+	}
+}
+
+@custom-variant kt-stepper-item-completed {
+	&[data-kt-stepper-item].completed {
+		@slot;
+	}
+	[data-kt-stepper-item].completed & {
+		@slot;
+	}
+}
+
+@custom-variant kt-stepper-item-pending {
+	&[data-kt-stepper-item].pending {
+		@slot;
+	}
+	[data-kt-stepper-item].pending & {
+		@slot;
+	}
+}

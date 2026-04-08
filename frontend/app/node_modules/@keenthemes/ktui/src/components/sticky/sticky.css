@@ -1,0 +1,22 @@
+/**
+ * KTUI - Free & Open-Source Tailwind UI Components by Keenthemes
+ * Copyright 2025 by Keenthemes Inc
+ */
+
+@custom-variant kt-sticky-active {
+	&[data-kt-sticky-initialized].active {
+		@slot;
+	}
+	[data-kt-sticky-initialized].active & {
+		@slot;
+	}
+}
+
+@custom-variant kt-sticky-release {
+	&[data-kt-sticky-initialized].release {
+		@slot;
+	}
+	[data-kt-sticky-initialized].release & {
+		@slot;
+	}
+}

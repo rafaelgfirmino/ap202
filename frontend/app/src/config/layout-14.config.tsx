@@ -10,10 +10,8 @@ import {
   Briefcase,
   Building2,
   DoorClosed,
-  Megaphone,
-  ClipboardList,
-  Grid,
-  Calendar
+  Blocks,
+  Megaphone
 } from "lucide-react";
 
 export const MENU_SIDEBAR_MAIN: MenuConfig = [
@@ -83,37 +81,21 @@ export const MENU_SIDEBAR_WORKSPACES: MenuConfig = [
     children: [
       {
         title: 'Condomínio',
-        path: '#',
+        path: '/condominiums/:code',
         icon: Building2
       },
       {
-        title: 'Unidade',
-        path: '#',
+        title: 'Cadastro de grupos',
+        path: '/condominiums/:code/unit-groups',
+        icon: Blocks
+      },
+      {
+        title: 'Unidades',
+        path: '/condominiums/:code/units',
         icon: DoorClosed
       },
     ],
   }
 ];
 
-export const MENU_TOOLBAR: MenuConfig = [
-  {
-    title: 'List',
-    path: '/layout-14',
-    icon: ClipboardList
-  },
-  {
-    title: 'Kanban',
-    path: '#',
-    icon: Grid
-  },
-  {
-    title: 'Calendar',
-    path: '#',
-    icon: Calendar
-  },
-  {
-    title: 'Dashboard',
-    path: '#',
-    icon: Bolt
-  },
-];
+export const MENU_TOOLBAR: MenuConfig = [];

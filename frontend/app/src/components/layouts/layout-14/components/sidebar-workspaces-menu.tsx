@@ -52,8 +52,8 @@ export function SidebarWorkspacesMenu() {
           <AccordionMenuSubContent type="single" collapsible parentValue="workspace-trigger">
             {item.children?.map((child, index) => {
               const resolvedPath =
-                child.title === 'Condomínio' && activeCondominium
-                  ? `/condominiums/${activeCondominium.code}`
+                child.path && activeCondominium
+                  ? child.path.replace(':code', activeCondominium.code)
                   : child.path || '#';
 
               return (
