@@ -8,10 +8,10 @@ import {
   SquareActivity,
   Newspaper,
   Briefcase,
-  Building2,
   DoorClosed,
   Blocks,
-  Megaphone
+  Megaphone,
+  Settings
 } from "lucide-react";
 
 export const MENU_SIDEBAR_MAIN: MenuConfig = [
@@ -19,12 +19,12 @@ export const MENU_SIDEBAR_MAIN: MenuConfig = [
     children: [
       {
         title: 'Home',
-        path: '#',
+        path: '/condominiums/:code/configuration',
         icon: Bolt
       },
       {
         title: 'Lançar despesa',
-        path: '#',
+        path: '/condominiums/:code/expenses',
         icon: ReceiptText
       },
       {
@@ -80,9 +80,9 @@ export const MENU_SIDEBAR_WORKSPACES: MenuConfig = [
     title: 'Configurações',
     children: [
       {
-        title: 'Condomínio',
-        path: '/condominiums/:code',
-        icon: Building2
+        title: 'Configuração',
+        path: '/condominiums/:code/configuration',
+        icon: Settings
       },
       {
         title: 'Cadastro de grupos',

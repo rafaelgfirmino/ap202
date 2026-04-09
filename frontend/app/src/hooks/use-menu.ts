@@ -12,11 +12,30 @@ interface UseMenuReturn {
 }
 
 export const useMenu = (pathname: string): UseMenuReturn => {
+  const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const isDynamicMatch = (path: string): boolean => {
+    if (!path.includes(':')) return false;
+    const pattern = path
+      .split('/')
+      .map((segment) => {
+        if (!segment) return '';
+        return segment.startsWith(':') ? '[^/]+' : escapeRegex(segment);
+      })
+      .join('/');
+
+    const regex = new RegExp(`^${pattern}(?:$|/)`);
+    return regex.test(pathname);
+  };
+
   const isActive = (path: string | undefined): boolean => {
+    if (!path) return false;
+    if (isDynamicMatch(path)) return true;
+
     if (path && path === '/') {
       return path === pathname;
     } else {
-      return !!path && pathname.startsWith(path);
+      return pathname.startsWith(path);
     }
   };
 

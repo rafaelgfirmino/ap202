@@ -8,9 +8,11 @@ import {
   AccordionMenuLabel
 } from '@/components/ui/accordion-menu';
 import { Badge } from '@/components/ui/badge';
+import { useCondominiumContext } from '@/contexts/condominium-context';
 
 export function SidebarPrimaryMenu() {
   const { pathname } = useLocation();
+  const { activeCondominium } = useCondominiumContext();
 
   // Memoize matchPath to prevent unnecessary re-renders
   const matchPath = useCallback(
@@ -38,9 +40,14 @@ export function SidebarPrimaryMenu() {
               {item.title}
             </AccordionMenuLabel>
             {item.children?.map((child, index) => {
+              const resolvedPath =
+                child.path && activeCondominium
+                  ? child.path.replace(':code', activeCondominium.code)
+                  : child.path || '#';
+
               return (
-                <AccordionMenuItem key={index} value={child.path || '#'}>
-                  <Link to={child.path || '#'}>
+                <AccordionMenuItem key={index} value={resolvedPath}>
+                  <Link to={resolvedPath}>
                     {child.icon && <child.icon />}
                     <span>{child.title}</span>
                     {child.badge == 'Beta' && <Badge size="sm" variant="destructive" appearance="light">{child.badge}</Badge>}
