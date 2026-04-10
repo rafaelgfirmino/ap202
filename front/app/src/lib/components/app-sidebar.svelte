@@ -60,8 +60,8 @@
 			},
 		],
 		versions: {
-			frontend: "1.0.0",
-			backend: "3.0.1",
+			frontend: "0.0.1",
+			backend: "0.0.1",
 		},
 		condominiums: [
 			{

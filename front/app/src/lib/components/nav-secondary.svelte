@@ -51,7 +51,7 @@
 					Version
 				</div>
 				<div id="sidebar-version-value" class="font-medium">
-					v{versions.frontend} / {versions.backend}
+					v {versions.frontend} / {versions.backend}
 				</div>
 			</div>
 		{/if}
