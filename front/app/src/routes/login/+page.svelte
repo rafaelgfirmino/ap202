@@ -57,117 +57,135 @@
 				</div>
 				<div
 					id="login-preview-shell"
-					class="rounded-[24px] border border-[#eceef2] bg-[linear-gradient(180deg,#f8fafc_0%,#eef4d2_100%)] p-4"
+					class="rounded-[24px] border border-[#eceef2] bg-[radial-gradient(circle_at_top,#ffffff_0%,#f8fafc_46%,#eff6ff_100%)] p-4"
 				>
 					<div
 						id="login-preview-sidebar"
-						class="relative h-[420px] overflow-hidden rounded-[20px] border border-[#d9e1cc] bg-[linear-gradient(180deg,#eff5c8_0%,#e5edbd_100%)]"
+						class="relative h-[420px] overflow-hidden rounded-[20px] border border-[#e3e8ef] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]"
 					>
-						<div
-							id="login-preview-illustration-glow"
-							class="absolute -top-10 left-8 h-44 w-44 rounded-full bg-[#99f6e4]/60 blur-3xl"
-						></div>
-						<div
-							id="login-preview-illustration-glow-2"
-							class="absolute right-8 bottom-10 h-40 w-40 rounded-full bg-[#60a5fa]/35 blur-3xl"
-						></div>
+						<div id="login-preview-grid" class="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.05)_1px,transparent_1px)] bg-[size:34px_34px] opacity-55"></div>
+						<div id="login-preview-grid-mask" class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(255,255,255,0.7)_100%)]"></div>
 
 						<div
-							id="login-preview-condominium-base"
-							class="absolute left-1/2 top-[62%] h-[250px] w-[300px] -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] rounded-[28px] border border-[#a8b59a] bg-[#f8fafc] shadow-[0_18px_30px_rgba(61,87,53,0.12)]"
-						></div>
-
-						<div
-							id="login-preview-condominium-court"
-							class="absolute right-[42px] top-[134px] h-[116px] w-[112px] skew-y-[-28deg] rounded-[10px] border border-[#a8b59a] bg-[linear-gradient(180deg,#d9ebc3_0%,#c5ddae_100%)]"
-						></div>
-						<div id="login-preview-condominium-court-line-1" class="absolute right-[66px] top-[160px] h-[58px] w-[1px] bg-[#a3b89a]"></div>
-						<div id="login-preview-condominium-court-line-2" class="absolute right-[92px] top-[176px] h-[1px] w-[62px] bg-[#a3b89a]"></div>
-
-						<div
-							id="login-preview-condominium-gate"
-							class="absolute left-[38px] bottom-[92px] h-[40px] w-[92px] rotate-[-28deg] rounded-[10px] border border-[#9eac91] bg-[#dce8c7]"
-						></div>
-						<div id="login-preview-condominium-gate-roof" class="absolute left-[48px] bottom-[120px] h-[6px] w-[72px] rotate-[-28deg] rounded-full bg-[#94a382]"></div>
-
-						<div
-							id="login-preview-building-back-left"
-							class="absolute left-[74px] top-[118px] h-[132px] w-[74px] rounded-t-[8px] rounded-b-[18px] border border-[#8ea28a] bg-[#cfe5c9]"
+							id="login-preview-float-card-financial"
+							class="absolute left-[34px] top-[226px] flex w-[122px] -rotate-[18deg] flex-col gap-2 rounded-[18px] border border-[#d9e3ee] bg-white/95 p-3 shadow-[0_16px_34px_rgba(15,23,42,0.08)]"
 						>
-							<div id="login-preview-building-back-left-roof" class="mx-auto mt-[-16px] h-[24px] w-[52px] rounded-[6px] border border-[#7c9098] bg-[linear-gradient(180deg,#8aa0d0_0%,#7188bf_100%)]"></div>
-							<div id="login-preview-building-back-left-windows" class="mx-auto mt-4 grid w-[46px] grid-cols-3 gap-1">
-								{#each Array(15) as _, index}
-									<div id={`login-preview-building-back-left-window-${index + 1}`} class="h-[6px] rounded-[2px] bg-[#f7f2c9]"></div>
+							<div id="login-preview-float-card-financial-bar-1" class="h-2 w-14 rounded-full bg-[#0f172a]"></div>
+							<div id="login-preview-float-card-financial-bar-2" class="h-2 w-20 rounded-full bg-[#cbd5e1]"></div>
+							<div id="login-preview-float-card-financial-row" class="mt-2 flex items-end gap-1">
+								<div id="login-preview-float-card-financial-col-1" class="h-6 w-4 rounded-t-md bg-[#bfdbfe]"></div>
+								<div id="login-preview-float-card-financial-col-2" class="h-9 w-4 rounded-t-md bg-[#60a5fa]"></div>
+								<div id="login-preview-float-card-financial-col-3" class="h-12 w-4 rounded-t-md bg-[#0f172a]"></div>
+							</div>
+						</div>
+
+						<div
+							id="login-preview-float-card-units"
+							class="absolute right-[42px] top-[250px] flex w-[138px] rotate-[16deg] flex-col gap-2 rounded-[18px] border border-[#d9e3ee] bg-white/95 p-3 shadow-[0_16px_34px_rgba(15,23,42,0.08)]"
+						>
+							<div id="login-preview-float-card-units-title" class="h-2 w-18 rounded-full bg-[#0f172a]"></div>
+							<div id="login-preview-float-card-units-row-1" class="flex gap-2">
+								<div class="h-7 flex-1 rounded-xl bg-[#eff6ff]"></div>
+								<div class="h-7 w-8 rounded-xl bg-[#dbeafe]"></div>
+							</div>
+							<div id="login-preview-float-card-units-row-2" class="flex gap-2">
+								<div class="h-7 flex-1 rounded-xl bg-[#f8fafc]"></div>
+								<div class="h-7 w-8 rounded-xl bg-[#e2e8f0]"></div>
+							</div>
+						</div>
+
+						<div
+							id="login-preview-float-card-residents"
+							class="absolute right-[88px] top-[72px] flex w-[96px] rotate-[12deg] flex-col gap-2 rounded-[18px] border border-[#d9e3ee] bg-white/92 p-3 shadow-[0_16px_34px_rgba(15,23,42,0.08)]"
+						>
+							<div id="login-preview-float-card-residents-avatar-row" class="flex gap-2">
+								<div class="size-7 rounded-full bg-[#0f172a]"></div>
+								<div class="size-7 rounded-full bg-[#93c5fd]"></div>
+							</div>
+							<div id="login-preview-float-card-residents-line" class="h-2 w-14 rounded-full bg-[#cbd5e1]"></div>
+						</div>
+
+						<div
+							id="login-preview-connector-left"
+							class="absolute left-[136px] top-[254px] h-[1px] w-[84px] rotate-[18deg] bg-[#cbd5e1]"
+						></div>
+						<div
+							id="login-preview-connector-right"
+							class="absolute right-[130px] top-[246px] h-[1px] w-[88px] -rotate-[18deg] bg-[#cbd5e1]"
+						></div>
+						<div
+							id="login-preview-connector-top"
+							class="absolute right-[154px] top-[132px] h-[1px] w-[92px] -rotate-[36deg] bg-[#cbd5e1]"
+						></div>
+
+						<div
+							id="login-preview-condo-stage-bottom"
+							class="absolute left-1/2 top-[56%] h-[120px] w-[214px] -translate-x-1/2 -translate-y-1/2 rotate-[-31deg] rounded-[26px] border border-[#9ca3af] bg-[#d1d5db] shadow-[0_16px_28px_rgba(15,23,42,0.14)]"
+						></div>
+						<div
+							id="login-preview-condo-stage-middle"
+							class="absolute left-1/2 top-[49%] h-[112px] w-[202px] -translate-x-1/2 -translate-y-1/2 rotate-[-31deg] rounded-[24px] border border-[#d8dee7] bg-white shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+						></div>
+						<div
+							id="login-preview-condo-stage-top"
+							class="absolute left-1/2 top-[42%] h-[104px] w-[188px] -translate-x-1/2 -translate-y-1/2 rotate-[-31deg] rounded-[22px] border border-[#dbe3ee] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+						></div>
+
+						<div
+							id="login-preview-condo-building-left"
+							class="absolute left-[132px] top-[124px] h-[106px] w-[44px] rotate-[-8deg] rounded-t-[10px] rounded-b-[12px] border border-[#94a3b8] bg-[linear-gradient(180deg,#f8fafc_0%,#dbeafe_100%)] shadow-[0_10px_22px_rgba(15,23,42,0.08)]"
+						>
+							<div id="login-preview-condo-building-left-roof" class="h-5 rounded-t-[10px] border-b border-[#cbd5e1] bg-white"></div>
+							<div id="login-preview-condo-building-left-windows" class="mx-auto mt-2 grid w-[26px] grid-cols-2 gap-1">
+								{#each Array(10) as _, index}
+									<div id={`login-preview-condo-building-left-window-${index + 1}`} class="h-[6px] rounded-[2px] bg-[#bfdbfe]"></div>
 								{/each}
 							</div>
 						</div>
 
 						<div
-							id="login-preview-building-back-center"
-							class="absolute left-[154px] top-[88px] h-[170px] w-[86px] rounded-t-[10px] rounded-b-[20px] border border-[#8ea28a] bg-[#d8ecd2]"
+							id="login-preview-condo-building-center"
+							class="absolute left-[184px] top-[96px] h-[142px] w-[56px] rotate-[-8deg] rounded-t-[12px] rounded-b-[14px] border border-[#94a3b8] bg-[linear-gradient(180deg,#f8fafc_0%,#dbeafe_100%)] shadow-[0_14px_28px_rgba(15,23,42,0.1)]"
 						>
-							<div id="login-preview-building-back-center-roof" class="mx-auto mt-[-18px] h-[28px] w-[60px] rounded-[6px] border border-[#7c9098] bg-[linear-gradient(180deg,#8aa0d0_0%,#7188bf_100%)]"></div>
-							<div id="login-preview-building-back-center-windows" class="mx-auto mt-5 grid w-[54px] grid-cols-3 gap-1.5">
-								{#each Array(18) as _, index}
-									<div id={`login-preview-building-back-center-window-${index + 1}`} class="h-[6px] rounded-[2px] bg-[#f7f2c9]"></div>
+							<div id="login-preview-condo-building-center-roof" class="h-6 rounded-t-[12px] border-b border-[#cbd5e1] bg-white"></div>
+							<div id="login-preview-condo-building-center-windows" class="mx-auto mt-2 grid w-[34px] grid-cols-2 gap-1">
+								{#each Array(14) as _, index}
+									<div id={`login-preview-condo-building-center-window-${index + 1}`} class="h-[7px] rounded-[2px] bg-[#93c5fd]"></div>
 								{/each}
 							</div>
 						</div>
 
 						<div
-							id="login-preview-building-front"
-							class="absolute left-[160px] top-[204px] h-[132px] w-[82px] rounded-t-[10px] rounded-b-[20px] border border-[#8ea28a] bg-[#d4e8cd]"
+							id="login-preview-condo-building-right"
+							class="absolute left-[252px] top-[138px] h-[96px] w-[46px] rotate-[-8deg] rounded-t-[10px] rounded-b-[12px] border border-[#94a3b8] bg-[linear-gradient(180deg,#f8fafc_0%,#dbeafe_100%)] shadow-[0_10px_22px_rgba(15,23,42,0.08)]"
 						>
-							<div id="login-preview-building-front-roof" class="mx-auto mt-[-16px] h-[24px] w-[56px] rounded-[6px] border border-[#7c9098] bg-[linear-gradient(180deg,#8aa0d0_0%,#7188bf_100%)]"></div>
-							<div id="login-preview-building-front-windows" class="mx-auto mt-4 grid w-[50px] grid-cols-3 gap-1.5">
-								{#each Array(15) as _, index}
-									<div id={`login-preview-building-front-window-${index + 1}`} class="h-[6px] rounded-[2px] bg-[#f7f2c9]"></div>
+							<div id="login-preview-condo-building-right-roof" class="h-5 rounded-t-[10px] border-b border-[#cbd5e1] bg-white"></div>
+							<div id="login-preview-condo-building-right-windows" class="mx-auto mt-2 grid w-[28px] grid-cols-2 gap-1">
+								{#each Array(10) as _, index}
+									<div id={`login-preview-condo-building-right-window-${index + 1}`} class="h-[6px] rounded-[2px] bg-[#bfdbfe]"></div>
 								{/each}
 							</div>
 						</div>
 
 						<div
-							id="login-preview-building-right"
-							class="absolute right-[62px] top-[138px] h-[146px] w-[82px] rounded-t-[10px] rounded-b-[20px] border border-[#8ea28a] bg-[#d3e7cc]"
+							id="login-preview-condo-court"
+							class="absolute left-[258px] top-[224px] h-[62px] w-[94px] rotate-[-31deg] rounded-[14px] border border-[#bfdbfe] bg-[linear-gradient(180deg,#eff6ff_0%,#dbeafe_100%)]"
+						></div>
+						<div id="login-preview-condo-court-line-1" class="absolute left-[300px] top-[236px] h-[38px] w-[1px] bg-[#93c5fd]"></div>
+						<div id="login-preview-condo-court-line-2" class="absolute left-[280px] top-[255px] h-[1px] w-[42px] bg-[#93c5fd]"></div>
+
+						<div
+							id="login-preview-condo-tree"
+							class="absolute left-[146px] top-[250px] flex flex-col items-center"
 						>
-							<div id="login-preview-building-right-roof" class="mx-auto mt-[-16px] h-[24px] w-[56px] rounded-[6px] border border-[#7c9098] bg-[linear-gradient(180deg,#8aa0d0_0%,#7188bf_100%)]"></div>
-							<div id="login-preview-building-right-windows" class="mx-auto mt-4 grid w-[50px] grid-cols-3 gap-1.5">
-								{#each Array(15) as _, index}
-									<div id={`login-preview-building-right-window-${index + 1}`} class="h-[6px] rounded-[2px] bg-[#f7f2c9]"></div>
-								{/each}
-							</div>
-						</div>
-
-						<div id="login-preview-tree-1" class="absolute left-[118px] top-[272px]">
-							<div id="login-preview-tree-1-crown" class="h-[30px] w-[30px] rounded-full border border-[#93a085] bg-[#c8dfbf]"></div>
-							<div id="login-preview-tree-1-trunk" class="mx-auto h-[22px] w-[3px] bg-[#7c6b56]"></div>
-						</div>
-						<div id="login-preview-tree-2" class="absolute left-[90px] top-[300px]">
-							<div id="login-preview-tree-2-crown" class="h-[26px] w-[26px] rounded-full border border-[#93a085] bg-[#c8dfbf]"></div>
-							<div id="login-preview-tree-2-trunk" class="mx-auto h-[18px] w-[3px] bg-[#7c6b56]"></div>
-						</div>
-						<div id="login-preview-tree-3" class="absolute left-[150px] top-[306px]">
-							<div id="login-preview-tree-3-crown" class="h-[22px] w-[22px] rounded-full border border-[#93a085] bg-[#c8dfbf]"></div>
-							<div id="login-preview-tree-3-trunk" class="mx-auto h-[14px] w-[3px] bg-[#7c6b56]"></div>
+							<div id="login-preview-condo-tree-crown" class="size-8 rounded-full border border-[#94a3b8] bg-[#dbeafe]"></div>
+							<div id="login-preview-condo-tree-trunk" class="h-5 w-[3px] bg-[#64748b]"></div>
 						</div>
 
 						<div
-							id="login-preview-car-1"
-							class="absolute left-[42px] top-[168px] h-[18px] w-[26px] rounded-[8px] border border-[#98a88b] bg-[#d7e0bc]"
+							id="login-preview-condo-car"
+							class="absolute left-[112px] top-[282px] h-[16px] w-[30px] rotate-[-30deg] rounded-[8px] border border-[#94a3b8] bg-white shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
 						></div>
-						<div
-							id="login-preview-car-2"
-							class="absolute right-[30px] top-[290px] h-[18px] w-[26px] rounded-[8px] border border-[#98a88b] bg-[#d7e0bc]"
-						></div>
-						<div
-							id="login-preview-car-3"
-							class="absolute left-[86px] bottom-[44px] h-[18px] w-[26px] rounded-[8px] border border-[#98a88b] bg-[#d7e0bc]"
-						></div>
-
-						<div id="login-preview-post-1" class="absolute left-[28px] top-[142px] h-[32px] w-[2px] bg-[#7f8a72]"></div>
-						<div id="login-preview-post-2" class="absolute left-[58px] bottom-[62px] h-[30px] w-[2px] bg-[#7f8a72]"></div>
-						<div id="login-preview-post-3" class="absolute right-[26px] top-[118px] h-[34px] w-[2px] bg-[#7f8a72]"></div>
-						<div id="login-preview-post-4" class="absolute right-[44px] bottom-[72px] h-[32px] w-[2px] bg-[#7f8a72]"></div>
 					</div>
 				</div>
 			</div>
