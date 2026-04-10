@@ -16,20 +16,21 @@ import {
 
 export const MENU_SIDEBAR_MAIN: MenuConfig = [
   {
+    title: 'Principal',
     children: [
       {
-        title: 'Home',
+        title: 'Dashboard',
         path: '/condominiums/:code/configuration',
         icon: Bolt
       },
       {
-        title: 'Lançar despesa',
+        title: 'Despesas',
         path: '/condominiums/:code/expenses',
         icon: ReceiptText
       },
       {
-        title: 'Enviar Convite',
-        path: '#',
+        title: 'Unidades',
+        path: '/condominiums/:code/units',
         icon: UserPlus
       },
     ],

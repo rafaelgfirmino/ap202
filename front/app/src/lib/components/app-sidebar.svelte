@@ -9,6 +9,7 @@
 	import PieChartIcon from "@lucide/svelte/icons/pie-chart";
 	import MapIcon from "@lucide/svelte/icons/map";
 	import CommandIcon from "@lucide/svelte/icons/command";
+	import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
 
 	const data = {
 		user: {
@@ -115,6 +116,20 @@
 				icon: SendIcon,
 			},
 		],
+		condominiums: [
+			{
+				name: "Residencial Alameda",
+				plan: "Ativo",
+			},
+			{
+				name: "Condominio Jardim das Flores",
+				plan: "8 blocos",
+			},
+			{
+				name: "Vila do Lago",
+				plan: "12 unidades",
+			},
+		],
 		projects: [
 			{
 				name: "Design Engineering",
@@ -138,37 +153,97 @@
 <script lang="ts">
 	import type { ComponentProps } from "svelte";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import NavMain from "./nav-main.svelte";
 	import NavProjects from "./nav-projects.svelte";
 	import NavSecondary from "./nav-secondary.svelte";
-	import NavUser from "./nav-user.svelte";
 
 	let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> = $props();
+	let selectedCondominium = $state(data.condominiums[0].name);
+
+	const activeCondominium = $derived(
+		data.condominiums.find((condominium) => condominium.name === selectedCondominium) ??
+			data.condominiums[0]
+	);
 </script>
 
 <Sidebar.Root
 	bind:ref
-	class="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+	class="h-svh"
 	{...restProps}
 >
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton size="lg">
-					{#snippet child({ props })}
-						<a href="##" {...props}>
-							<div
-								class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger>
+						{#snippet child({ props })}
+							<Sidebar.MenuButton
+								id="condominium-switcher-trigger"
+								size="lg"
+								class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+								{...props}
 							>
-								<CommandIcon class="size-4" />
-							</div>
-							<div class="grid flex-1 text-start text-sm leading-tight">
-								<span class="truncate font-medium">Acme Inc</span>
-								<span class="truncate text-xs">Enterprise</span>
-							</div>
-						</a>
-					{/snippet}
-				</Sidebar.MenuButton>
+								<div
+									id="condominium-switcher-icon"
+									class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
+								>
+									<CommandIcon class="size-4" />
+								</div>
+								<div
+									id="condominium-switcher-summary"
+									class="grid flex-1 text-start text-sm leading-tight"
+								>
+									<span id="condominium-switcher-name" class="truncate font-medium">
+										{activeCondominium.name}
+									</span>
+									<span id="condominium-switcher-meta" class="truncate text-xs">
+										Trocar de condominio
+									</span>
+								</div>
+								<ChevronsUpDownIcon class="ml-auto size-4" />
+							</Sidebar.MenuButton>
+						{/snippet}
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content
+						id="condominium-switcher-menu"
+						class="w-(--bits-dropdown-menu-anchor-width) min-w-56 rounded-lg"
+						side="bottom"
+						align="start"
+						sideOffset={6}
+					>
+						<DropdownMenu.Label id="condominium-switcher-menu-label" class="text-xs">
+							Trocar de condominio
+						</DropdownMenu.Label>
+						<DropdownMenu.Separator />
+						<DropdownMenu.RadioGroup bind:value={selectedCondominium}>
+							{#each data.condominiums as condominium (condominium.name)}
+								<DropdownMenu.RadioItem
+									id={`condominium-option-${condominium.name.toLowerCase().replaceAll(" ", "-")}`}
+									value={condominium.name}
+								>
+									<div
+										id={`condominium-option-content-${condominium.name.toLowerCase().replaceAll(" ", "-")}`}
+										class="flex flex-col"
+									>
+										<span
+											id={`condominium-option-name-${condominium.name.toLowerCase().replaceAll(" ", "-")}`}
+											class="font-medium"
+										>
+											{condominium.name}
+										</span>
+										<span
+											id={`condominium-option-meta-${condominium.name.toLowerCase().replaceAll(" ", "-")}`}
+											class="text-muted-foreground text-[11px]"
+										>
+											{condominium.plan}
+										</span>
+									</div>
+								</DropdownMenu.RadioItem>
+							{/each}
+						</DropdownMenu.RadioGroup>
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>
 	</Sidebar.Header>
@@ -177,7 +252,4 @@
 		<NavProjects projects={data.projects} />
 		<NavSecondary items={data.navSecondary} class="mt-auto" />
 	</Sidebar.Content>
-	<Sidebar.Footer>
-		<NavUser user={data.user} />
-	</Sidebar.Footer>
 </Sidebar.Root>

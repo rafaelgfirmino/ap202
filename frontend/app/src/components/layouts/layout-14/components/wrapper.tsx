@@ -14,7 +14,7 @@ export function Wrapper() {
 
       <div
         id="layout-14-wrapper-content"
-        className="grow overflow-y-auto pt-(--header-height-mobile) lg:pt-(--header-height) lg:ps-(--sidebar-width) lg:in-data-[sidebar-open=false]:ps-(--sidebar-collapsed-width) transition-all duration-300"
+        className="grow overflow-y-auto pt-(--header-height-mobile) lg:pt-(--header-height) lg:ps-(--sidebar-width) lg:in-data-[sidebar-open=false]:ps-0 transition-all duration-300"
       >
         <main id="layout-14-wrapper-main" className="grow p-5" role="content">
           {isMobile && <HeaderBreadcrumbs />}

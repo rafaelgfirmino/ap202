@@ -18,11 +18,11 @@ export function Layout14() {
 
       <LayoutProvider
         style={{
-          '--sidebar-width': '300px',
-          '--sidebar-collapsed-width': '60px',
+          '--sidebar-width': '260px',
+          '--sidebar-collapsed-width': '0px',
           '--sidebar-header-height': '54px',
-          '--header-height': '60px',
-          '--header-height-mobile': '60px',
+          '--header-height': '64px',
+          '--header-height-mobile': '64px',
         } as React.CSSProperties}
       >
         <Wrapper />

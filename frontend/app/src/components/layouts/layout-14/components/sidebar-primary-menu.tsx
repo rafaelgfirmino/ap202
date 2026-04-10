@@ -26,10 +26,10 @@ export function SidebarPrimaryMenu() {
       selectedValue={pathname}
       matchPath={matchPath}
       type="multiple"
-      className="space-y-7.5 px-2.5"
+      className="space-y-6 px-3 py-4"
       classNames={{
-        label: 'text-xs font-normal text-muted-foreground mb-2',
-        item: 'h-8.5 px-2.5 text-sm font-normal text-foreground hover:text-primary data-[selected=true]:bg-muted data-[selected=true]:text-foreground [&[data-selected=true]_svg]:opacity-100',
+        label: 'mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#98a2b3]',
+        item: 'h-10 rounded-xl px-3 text-sm font-medium text-[#344054] hover:bg-[#f7f8fb] hover:text-[#111827] data-[selected=true]:bg-[#f1f3f7] data-[selected=true]:text-[#111827] [&[data-selected=true]_svg]:opacity-100',
         group: '',
       }}
     >

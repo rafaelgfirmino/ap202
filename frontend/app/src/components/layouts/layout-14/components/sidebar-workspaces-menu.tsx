@@ -31,12 +31,12 @@ export function SidebarWorkspacesMenu() {
       type="single"
       collapsible
       defaultValue="workspace-trigger"
-      className="space-y-7.5 px-2.5"
+      className="space-y-6 px-3 py-2"
       classNames={{
-        item: 'h-8.5 px-2.5 text-sm font-normal text-foreground hover:text-primary hover:bg-background data-[selected=true]:bg-background data-[selected=true]:text-foreground [&[data-selected=true]_svg]:opacity-100',
-        subTrigger: 'text-xs font-normal text-muted-foreground hover:bg-transparent group [&_[data-slot="accordion-menu-sub-indicator"]]:hidden',
+        item: 'h-10 rounded-xl px-3 text-sm font-medium text-[#344054] hover:bg-[#f7f8fb] hover:text-[#111827] data-[selected=true]:bg-[#f1f3f7] data-[selected=true]:text-[#111827] [&[data-selected=true]_svg]:opacity-100',
+        subTrigger: 'group px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#98a2b3] hover:bg-transparent [&_[data-slot="accordion-menu-sub-indicator"]]:hidden',
         subContent: 'ps-0',
-        indicator: 'ms-auto flex items-center font-medium',
+        indicator: 'ms-auto flex items-center font-medium text-[#98a2b3]',
       }}
     >
       {MENU_SIDEBAR_WORKSPACES.map((item, index) => (
