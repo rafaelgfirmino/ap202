@@ -1,14 +1,12 @@
 <script lang="ts" module>
+	import HouseIcon from "@lucide/svelte/icons/house";
 	import SquareTerminalIcon from "@lucide/svelte/icons/square-terminal";
-	import BotIcon from "@lucide/svelte/icons/bot";
-	import BookOpenIcon from "@lucide/svelte/icons/book-open";
-	import Settings2Icon from "@lucide/svelte/icons/settings-2";
+	import ScaleIcon from "@lucide/svelte/icons/scale";
+	import Building2Icon from "@lucide/svelte/icons/building-2";
+	import DoorOpenIcon from "@lucide/svelte/icons/door-open";
+	import SlidersHorizontalIcon from "@lucide/svelte/icons/sliders-horizontal";
 	import LifeBuoyIcon from "@lucide/svelte/icons/life-buoy";
 	import SendIcon from "@lucide/svelte/icons/send";
-	import FrameIcon from "@lucide/svelte/icons/frame";
-	import PieChartIcon from "@lucide/svelte/icons/pie-chart";
-	import MapIcon from "@lucide/svelte/icons/map";
-	import CommandIcon from "@lucide/svelte/icons/command";
 	import ChevronsUpDownIcon from "@lucide/svelte/icons/chevrons-up-down";
 
 	const data = {
@@ -18,6 +16,11 @@
 			avatar: "/avatars/shadcn.jpg",
 		},
 		navMain: [
+			{
+				title: "Home",
+				url: "#home",
+				icon: HouseIcon,
+			},
 			{
 				title: "Playground",
 				url: "#",
@@ -39,69 +42,9 @@
 				],
 			},
 			{
-				title: "Models",
-				url: "#",
-				icon: BotIcon,
-				items: [
-					{
-						title: "Genesis",
-						url: "#",
-					},
-					{
-						title: "Explorer",
-						url: "#",
-					},
-					{
-						title: "Quantum",
-						url: "#",
-					},
-				],
-			},
-			{
-				title: "Documentation",
-				url: "#",
-				icon: BookOpenIcon,
-				items: [
-					{
-						title: "Introduction",
-						url: "#",
-					},
-					{
-						title: "Get Started",
-						url: "#",
-					},
-					{
-						title: "Tutorials",
-						url: "#",
-					},
-					{
-						title: "Changelog",
-						url: "#",
-					},
-				],
-			},
-			{
-				title: "Settings",
-				url: "#",
-				icon: Settings2Icon,
-				items: [
-					{
-						title: "General",
-						url: "#",
-					},
-					{
-						title: "Team",
-						url: "#",
-					},
-					{
-						title: "Billing",
-						url: "#",
-					},
-					{
-						title: "Limits",
-						url: "#",
-					},
-				],
+				title: "Balancete",
+				url: "#balancete",
+				icon: ScaleIcon,
 			},
 		],
 		navSecondary: [
@@ -116,6 +59,10 @@
 				icon: SendIcon,
 			},
 		],
+		versions: {
+			frontend: "1.0.0",
+			backend: "3.0.1",
+		},
 		condominiums: [
 			{
 				name: "Residencial Alameda",
@@ -130,21 +77,21 @@
 				plan: "12 unidades",
 			},
 		],
-		projects: [
+		condominiumSettings: [
 			{
-				name: "Design Engineering",
-				url: "#",
-				icon: FrameIcon,
+				name: "Geral",
+				url: "#geral",
+				icon: SlidersHorizontalIcon,
 			},
 			{
-				name: "Sales & Marketing",
-				url: "#",
-				icon: PieChartIcon,
+				name: "Blocos",
+				url: "#blocos",
+				icon: Building2Icon,
 			},
 			{
-				name: "Travel",
-				url: "#",
-				icon: MapIcon,
+				name: "Unidades",
+				url: "#unidades",
+				icon: DoorOpenIcon,
 			},
 		],
 	};
@@ -155,7 +102,7 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
 	import NavMain from "./nav-main.svelte";
-	import NavProjects from "./nav-projects.svelte";
+	import NavCondominiumSettings from "./nav-condominium-settings.svelte";
 	import NavSecondary from "./nav-secondary.svelte";
 
 	let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> = $props();
@@ -188,7 +135,12 @@
 									id="condominium-switcher-icon"
 									class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
 								>
-									<CommandIcon class="size-4" />
+									<img
+										id="condominium-switcher-icon-image"
+										src="/media/app/logo-monograma.png"
+										alt="Logo monograma"
+										class="size-5 object-contain"
+									/>
 								</div>
 								<div
 									id="condominium-switcher-summary"
@@ -249,7 +201,7 @@
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<NavMain items={data.navMain} />
-		<NavProjects projects={data.projects} />
-		<NavSecondary items={data.navSecondary} class="mt-auto" />
+		<NavCondominiumSettings items={data.condominiumSettings} />
+		<NavSecondary items={data.navSecondary} versions={data.versions} class="mt-auto" />
 	</Sidebar.Content>
 </Sidebar.Root>
