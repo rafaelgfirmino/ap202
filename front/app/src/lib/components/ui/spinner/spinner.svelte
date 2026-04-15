@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { cn } from "$lib/utils.js";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
-	import { Loading03Icon } from '@hugeicons/core-free-icons';
+	import Loader2Icon from '@lucide/svelte/icons/loader-2';
 	import type { SVGAttributes } from "svelte/elements";
 
 	let {
@@ -16,4 +15,4 @@
 	}: SVGAttributes<SVGSVGElement> = $props();
 </script>
 
-<HugeiconsIcon icon={Loading03Icon} strokeWidth={2} {role} name={name === null ? undefined : name} color={color === null ? undefined : color} stroke={stroke === null ? undefined : stroke} aria-label={ariaLabel} class={cn("size-4 animate-spin", className)} {...restProps} />
+<Loader2Icon {role} name={name === null ? undefined : name} color={color === null ? undefined : color} stroke={stroke === null ? undefined : stroke} aria-label={ariaLabel} class={cn("size-4 animate-spin", className)} {...restProps} />

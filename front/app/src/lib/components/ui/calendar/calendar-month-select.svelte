@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
-	import { ArrowDownIcon } from '@hugeicons/core-free-icons';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 
 	let {
 		ref = $bindable(null),
@@ -42,7 +41,7 @@
 				aria-hidden="true"
 			>
 				{monthItems.find((item) => item.value === value)?.label || selectedMonthItem.label}
-				<HugeiconsIcon icon={ArrowDownIcon} strokeWidth={2} class={cn("size-4", className)} />
+				<ChevronDownIcon class={cn("size-4", className)} />
 			</span>
 		{/snippet}
 	</CalendarPrimitive.MonthSelect>

@@ -2,8 +2,7 @@
 	import type { ComponentProps } from "svelte";
 	import { cn } from "$lib/utils.js";
 	import { PaginationLink } from "./index.js";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
-	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 
 	type PaginationPreviousProps = ComponentProps<typeof PaginationLink>;
 
@@ -13,9 +12,9 @@
 <PaginationLink
 	aria-label="Go to previous page"
 	size="default"
-	class={cn("pl-2!", className)}
+	class={cn("pl-1.5!", className)}
 	{...restProps}
 >
-	<HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />
+	<ChevronLeftIcon data-icon="inline-start" />
 	<span class="cn-pagination-previous-text hidden sm:block">Previous</span>
 </PaginationLink>

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { RadioGroup as RadioGroupPrimitive } from "bits-ui";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
-	import { CircleIcon } from '@hugeicons/core-free-icons';
+	import CircleIcon from '@lucide/svelte/icons/circle';
 	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 
 	let {
@@ -23,7 +22,7 @@
 	{#snippet children({ checked })}
 		<div data-slot="radio-group-indicator" class="flex size-4 items-center justify-center">
 			{#if checked}
-				<HugeiconsIcon icon={CircleIcon} strokeWidth={2} class="bg-primary-foreground absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+				<CircleIcon class="bg-primary-foreground absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
 			{/if}
 		</div>
 	{/snippet}

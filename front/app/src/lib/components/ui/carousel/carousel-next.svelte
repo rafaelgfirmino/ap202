@@ -3,8 +3,7 @@
 	import { getEmblaContext } from "./context.js";
 	import { cn } from "$lib/utils.js";
 	import { Button, type Props } from "$lib/components/ui/button/index.js";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
-	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 
 	let {
 		ref = $bindable(null),
@@ -24,7 +23,7 @@
 	aria-disabled={!emblaCtx.canScrollNext}
 	disabled={!emblaCtx.canScrollNext}
 	class={cn(
-		"rounded-full absolute touch-manipulation",
+		"cn-carousel-next absolute touch-manipulation",
 		emblaCtx.orientation === "horizontal"
 			? "-end-12 top-1/2 -translate-y-1/2"
 			: "start-1/2 -bottom-12 -translate-x-1/2 rotate-90",
@@ -35,6 +34,6 @@
 	bind:ref
 	{...restProps}
 >
-	<HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2}  />
+	<ChevronRightIcon  />
 	<span class="sr-only">Next slide</span>
 </Button>
