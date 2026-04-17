@@ -1,5 +1,6 @@
 <script lang="ts">
  import * as NavigationMenu from "$lib/components/ui/navigation-menu/index.js";
+ import * as Tooltip from "$lib/components/ui/tooltip/index.js";
  import { cn } from "$lib/utils.js";
  import { navigationMenuTriggerStyle } from "$lib/components/ui/navigation-menu/navigation-menu-trigger.svelte";
  import type { Component } from "svelte";
@@ -7,6 +8,7 @@
  import BlocksIcon from "@lucide/svelte/icons/blocks";
  import FileTextIcon from "@lucide/svelte/icons/file-text";
  import SquareStackIcon from "@lucide/svelte/icons/square-stack";
+ import HousePlusIcon from "@lucide/svelte/icons/house-plus";
  import { IsMobile } from "$lib/components/hooks/is-mobole.svelte";
  
  const isMobile = new IsMobile();
@@ -21,7 +23,7 @@
    title: "Nova Unidade",
    href: "/docs/components/alert-dialog",
    content: "Crie uma nova unidade para o seu projeto",
-   icon: BlocksIcon
+   icon: HousePlusIcon
   },
   {
    title: "Novo Bloco",
@@ -29,7 +31,7 @@
    icon: SquareStackIcon
   },
   {
-   title: "Progress",
+   title: "Rateio",
    href: "/docs/components/progress",
    icon: FileTextIcon
   },
@@ -98,7 +100,7 @@
 <NavigationMenu.Root viewport={isMobile.current}>
  <NavigationMenu.List class="flex-wrap">
   <NavigationMenu.Item>
-   <NavigationMenu.Trigger>Components</NavigationMenu.Trigger>
+   <NavigationMenu.Trigger>Condomínio</NavigationMenu.Trigger>
    <NavigationMenu.Content>
     <ul
      id="nav-header-components-menu"
@@ -125,5 +127,53 @@
     {/snippet}
    </NavigationMenu.Link>
   </NavigationMenu.Item>
+
+   <NavigationMenu.Item class="hidden md:block">
+      <NavigationMenu.Trigger>With Icon</NavigationMenu.Trigger>
+ 
+      <NavigationMenu.Content>
+        <ul class="grid w-[200px] gap-4 p-2">
+          <li>
+            <Tooltip.Provider>
+              <Tooltip.Root>
+                <Tooltip.Trigger id="nav-header-backlog-tooltip-trigger">
+                  {#snippet child({ props })}
+                    <NavigationMenu.Link
+                      id="nav-header-backlog-link"
+                      href="##"
+                      class="flex-row items-center gap-2"
+                      aria-label="Abrir backlog do condomínio"
+                      {...props}
+                    >
+                      <BlocksIcon />
+                      Backlog
+                    </NavigationMenu.Link>
+                  {/snippet}
+                </Tooltip.Trigger>
+
+                <Tooltip.Content
+                  id="nav-header-backlog-tooltip-content"
+                  side="bottom"
+                  sideOffset={8}
+                >
+                  Cria uma nova unidade para o condomínio selecionado. Você pode criar quantas unidades quiser e editá-las posteriormente desdeque não tenham sido utilizadas em lançamentos ou rateios.
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+ 
+            <NavigationMenu.Link href="##" class="flex-row items-center gap-2">
+              <BlocksIcon />
+              To Do
+            </NavigationMenu.Link>
+ 
+            <NavigationMenu.Link href="##" class="flex-row items-center gap-2">
+            
+              <BlocksIcon />
+              Done
+            </NavigationMenu.Link>
+          </li>
+        </ul>
+      </NavigationMenu.Content>
+    </NavigationMenu.Item>
  </NavigationMenu.List>
 </NavigationMenu.Root>

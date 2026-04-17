@@ -1,0 +1,448 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.wrap{background:#fff;border-radius:12px;border:1px solid #E8E8E8;overflow:hidden;display:flex;flex-direction:column;min-height:860px}
+.topbar{background:#fff;border-bottom:1px solid #F0F0F0;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-title{font-size:14px;font-weight:600;color:#111}
+.tb-sub{font-size:11px;color:#94A3B8;margin-top:1px}
+.btn{height:30px;padding:0 14px;font-size:11px;font-weight:500;border-radius:6px;cursor:pointer;border:1px solid #E2E8F0;background:#fff;color:#111;transition:all .15s}
+.btn:hover{background:#F8FAFC}
+.btn.dark{background:#111;color:#fff;border-color:#111}
+.btn.dark:hover{background:#333}
+
+.body{display:grid;grid-template-columns:380px 1fr;flex:1;overflow:hidden;min-height:0}
+
+/* ── FORM (esquerda) ── */
+.form-side{padding:24px;overflow-y:auto;border-right:1px solid #F0F0F0;display:flex;flex-direction:column;gap:18px}
+
+.scope-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:#F1F5F9;border-radius:8px;padding:3px}
+.scope-tab{padding:7px 4px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;text-align:center;color:#64748B;transition:all .15s;border:none;background:transparent}
+.scope-tab.on{background:#fff;color:#111;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.label{font-size:11px;font-weight:500;color:#374151}
+.label span{color:#94A3B8;font-weight:400;margin-left:3px}
+.input{height:36px;border:1px solid #E2E8F0;border-radius:7px;padding:0 12px;font-size:12px;color:#111;background:#fff;outline:none;transition:border .15s;width:100%}
+.input:focus{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+.input::placeholder{color:#CBD5E1}
+.input.big{height:44px;font-size:20px;font-weight:700;letter-spacing:-.3px}
+.input.big::placeholder{font-size:16px;font-weight:400}
+.select{height:36px;border:1px solid #E2E8F0;border-radius:7px;padding:0 12px;font-size:12px;color:#111;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%2394A3B8'/%3E%3C/svg%3E") no-repeat right 12px center;appearance:none;outline:none;cursor:pointer;transition:border .15s;width:100%}
+.select:focus{border-color:#111}
+.textarea{width:100%;border:1px solid #E2E8F0;border-radius:7px;padding:10px 12px;font-size:12px;color:#111;background:#fff;outline:none;resize:none;line-height:1.5;transition:border .15s}
+.textarea:focus{border-color:#111}
+.textarea::placeholder{color:#CBD5E1}
+.hint{font-size:10px;color:#94A3B8;margin-top:2px}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* RATEIO SELECTOR */
+.rateio-opts{display:flex;gap:6px;flex-wrap:wrap}
+.rateio-opt{padding:5px 12px;font-size:11px;border:1px solid #E2E8F0;border-radius:20px;cursor:pointer;color:#64748B;background:#fff;transition:all .15s;font-weight:500}
+.rateio-opt:hover{border-color:#94A3B8}
+.rateio-opt.on{background:#111;color:#fff;border-color:#111}
+
+/* UPLOAD */
+.upload-zone{border:1.5px dashed #E2E8F0;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .15s}
+.upload-zone:hover{border-color:#94A3B8;background:#FAFAFA}
+.upload-icon{width:32px;height:32px;border-radius:8px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.upload-icon svg{width:14px;height:14px;color:#64748B}
+
+/* SCOPE BADGE */
+.scope-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;margin-bottom:4px}
+
+/* ── PREVIEW (direita) ── */
+.preview-side{background:#F8FAFC;display:flex;flex-direction:column;overflow:hidden}
+.preview-header{padding:16px 20px;background:#fff;border-bottom:1px solid #F0F0F0;flex-shrink:0}
+.ph-title{font-size:12px;font-weight:600;color:#111;margin-bottom:2px}
+.ph-sub{font-size:11px;color:#94A3B8}
+
+/* SUMMARY CARDS */
+.summary-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:16px 20px;flex-shrink:0}
+.sum-card{background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px}
+.sum-lbl{font-size:10px;color:#94A3B8;margin-bottom:4px}
+.sum-val{font-size:16px;font-weight:700;color:#111}
+.sum-sub{font-size:9px;color:#94A3B8;margin-top:2px}
+
+/* RATEIO LIST */
+.rateio-list{flex:1;overflow-y:auto;padding:0 20px 20px}
+.rl-section{margin-bottom:16px}
+.rl-sec-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0;margin-bottom:6px;border-bottom:1px solid #F0F0F0}
+.rl-sec-title{font-size:11px;font-weight:600;color:#111}
+.rl-sec-total{font-size:11px;font-weight:700;color:#111}
+.rl-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:1px solid #F0F0F0;border-radius:8px;margin-bottom:5px;transition:all .15s}
+.rl-row:hover{border-color:#E2E8F0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.rl-row.highlight{border-color:#111;background:#FAFAFA}
+.rl-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.rl-name{font-size:11px;font-weight:500;color:#111;flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rl-sub{font-size:10px;color:#94A3B8;margin-top:1px}
+.rl-fracao{font-size:10px;color:#94A3B8;margin-left:auto;padding-right:12px;white-space:nowrap}
+.rl-val{font-size:12px;font-weight:700;color:#111;white-space:nowrap;min-width:64px;text-align:right}
+.rl-bar-wrap{width:60px;height:4px;background:#F0F0F0;border-radius:2px;overflow:hidden;flex-shrink:0}
+.rl-bar{height:100%;border-radius:2px;background:#111;transition:width .4s}
+
+/* EMPTY PREVIEW */
+.preview-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px;text-align:center}
+.pe-icon{width:48px;height:48px;border-radius:12px;background:#F1F5F9;display:flex;align-items:center;justify-content:center}
+.pe-icon svg{width:22px;height:22px;color:#94A3B8}
+
+/* FOOTER */
+.footer{background:#fff;border-top:1px solid #F0F0F0;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.footer-info{font-size:11px;color:#94A3B8}
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="tb-title">Lançar despesa</div>
+      <div class="tb-sub">Residencial das Flores · Rateio calculado automaticamente</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn">Cancelar</button>
+      <button class="btn dark" onclick="salvar()">Lançar despesa →</button>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- FORM -->
+    <div class="form-side">
+
+      <!-- ESCOPO -->
+      <div class="field">
+        <div class="label">Escopo da despesa</div>
+        <div class="scope-tabs">
+          <button class="scope-tab on" onclick="setScope('geral',this)">🏢 Geral</button>
+          <button class="scope-tab" onclick="setScope('bloco',this)">🏗 Por bloco</button>
+          <button class="scope-tab" onclick="setScope('unidade',this)">🚪 Por unidade</button>
+        </div>
+        <div class="hint" id="scope-hint">Rateado entre todas as unidades do condomínio</div>
+      </div>
+
+      <!-- BLOCO SELECTOR (hidden inicialmente) -->
+      <div class="field" id="field-bloco" style="display:none">
+        <label class="label">Bloco</label>
+        <select class="select" id="sel-bloco" onchange="renderPreview()">
+          <option value="">Selecione o bloco…</option>
+          <option value="A">Bloco A — 32 unidades</option>
+          <option value="B">Bloco B — 30 unidades</option>
+        </select>
+      </div>
+
+      <!-- UNIDADE SELECTOR (hidden inicialmente) -->
+      <div class="field" id="field-unidade" style="display:none">
+        <label class="label">Unidade</label>
+        <select class="select" id="sel-unidade" onchange="renderPreview()">
+          <option value="">Selecione a unidade…</option>
+          <option>Apto 101 · João Silva</option>
+          <option>Apto 102 · Maria Alves</option>
+          <option>Apto 201 · Carlos Melo</option>
+          <option>Apto 301 · Ana Rocha</option>
+          <option>Apto 401 · Pedro Lima</option>
+          <option>Cobertura · Roberto Nunes</option>
+        </select>
+      </div>
+
+      <!-- VALOR -->
+      <div class="field">
+        <label class="label">Valor total <span>*</span></label>
+        <div style="position:relative">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:#94A3B8">R$</span>
+          <input class="input big" type="text" id="inp-valor" placeholder="0,00" style="padding-left:36px" oninput="renderPreview()">
+        </div>
+      </div>
+
+      <!-- CATEGORIA + DATA -->
+      <div class="form-row">
+        <div class="field">
+          <label class="label">Categoria</label>
+          <select class="select" id="sel-cat" onchange="renderPreview()">
+            <option>Manutenção</option>
+            <option>Limpeza</option>
+            <option>Segurança</option>
+            <option>Elétrica</option>
+            <option>Hidráulica</option>
+            <option>Paisagismo</option>
+            <option>Administração</option>
+            <option>Obra</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Data de competência</label>
+          <input class="input" type="text" value="Abr / 2026" id="inp-data">
+        </div>
+      </div>
+
+      <!-- DESCRIÇÃO -->
+      <div class="field">
+        <label class="label">Descrição <span>opcional</span></label>
+        <textarea class="textarea" rows="2" placeholder="Ex: Manutenção preventiva do elevador Bloco B…" id="inp-desc" oninput="renderPreview()"></textarea>
+      </div>
+
+      <!-- RATEIO (oculto em unidade) -->
+      <div class="field" id="field-rateio">
+        <label class="label">Forma de rateio</label>
+        <div class="rateio-opts">
+          <div class="rateio-opt on" onclick="setRateio('fracao',this)">Fração ideal</div>
+          <div class="rateio-opt" onclick="setRateio('igual',this)">Partes iguais</div>
+          <div class="rateio-opt" onclick="setRateio('area',this)">Por m²</div>
+        </div>
+        <span class="hint" id="rateio-hint">Cada unidade paga proporcionalmente à sua fração ideal no condomínio</span>
+      </div>
+
+      <!-- VENCIMENTO -->
+      <div class="field">
+        <label class="label">Vencimento do boleto</label>
+        <div class="form-row">
+          <input class="input" type="text" placeholder="Ex: 15/04/2026" value="15/04/2026">
+          <select class="select">
+            <option>Cobrar no próximo boleto</option>
+            <option>Parcelar em 2x</option>
+            <option>Parcelar em 3x</option>
+            <option>Parcelar em 6x</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- COMPROVANTE -->
+      <div class="field">
+        <label class="label">Comprovante <span>opcional</span></label>
+        <div class="upload-zone">
+          <div class="upload-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V3M5 6l3-3 3 3M3 13h10"/></svg></div>
+          <div style="font-size:11px;font-weight:500;color:#374151">Arraste ou clique para enviar</div>
+          <div style="font-size:10px;color:#94A3B8;margin-top:3px">PDF, JPG ou PNG · até 10 MB</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-side">
+      <div class="preview-header">
+        <div class="ph-title" id="ph-title">Preview do rateio</div>
+        <div class="ph-sub" id="ph-sub">Preencha o valor para visualizar o rateio por unidade</div>
+      </div>
+
+      <div id="preview-empty" class="preview-empty">
+        <div class="pe-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+        <div style="font-size:13px;font-weight:500;color:#374151">Rateio aparece aqui</div>
+        <div style="font-size:11px;color:#94A3B8;line-height:1.6;max-width:220px">Digite o valor da despesa para ver quanto cada unidade pagará</div>
+      </div>
+
+      <div id="preview-content" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+        <div class="summary-row" id="summary-row"></div>
+        <div class="rateio-list" id="rateio-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-info" id="footer-info">Selecione o escopo e valor para calcular o rateio</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:#94A3B8" id="footer-total"></span>
+      <button class="btn dark" onclick="salvar()">Lançar despesa →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let scope = 'geral';
+let rateio = 'fracao';
+
+const unidades = {
+  A:[
+    {num:'COB', name:'Roberto Nunes', fracao:2.1, area:120},
+    {num:801,   name:'Thais Mendes',  fracao:0.82,area:72},
+    {num:802,   name:'Felipe Duarte', fracao:0.78,area:68},
+    {num:803,   name:'Beatriz Ramos', fracao:0.82,area:72},
+    {num:804,   name:'Eduardo Campos',fracao:0.78,area:68},
+    {num:701,   name:'João Silva',    fracao:0.82,area:72},
+    {num:702,   name:'Maria Alves',   fracao:0.78,area:68},
+    {num:703,   name:'Carlos Melo',   fracao:0.82,area:72},
+    {num:704,   name:'Ana Rocha',     fracao:0.78,area:68},
+    {num:601,   name:'Pedro Lima',    fracao:0.82,area:72},
+    {num:602,   name:'Carla Dias',    fracao:0.78,area:68},
+    {num:603,   name:'Rafael Costa',  fracao:0.82,area:72},
+    {num:604,   name:'Juliana Nunes', fracao:0.78,area:68},
+    {num:501,   name:'Bruno Souza',   fracao:0.82,area:72},
+    {num:502,   name:'Fernanda Reis', fracao:0.78,area:68},
+    {num:503,   name:'Marcos Lopes',  fracao:0.82,area:72},
+  ],
+  B:[
+    {num:'COB', name:'Cristina Motta',fracao:2.1, area:120},
+    {num:801,   name:'Paula Moura',   fracao:0.82,area:72},
+    {num:802,   name:'Diego Ferreira',fracao:0.78,area:68},
+    {num:803,   name:'Isabela Cruz',  fracao:0.82,area:72},
+    {num:804,   name:'Rodrigo Santos',fracao:0.78,area:68},
+    {num:701,   name:'Camila Teixeira',fracao:0.82,area:72},
+    {num:702,   name:'André Barros',  fracao:0.78,area:68},
+    {num:703,   name:'Natália Gomes', fracao:0.82,area:72},
+    {num:704,   name:'Lucas Pinto',   fracao:0.78,area:68},
+    {num:601,   name:'Vanessa Araújo',fracao:0.82,area:72},
+    {num:602,   name:'Gabriel Faria', fracao:0.78,area:68},
+    {num:603,   name:'Larissa Vieira',fracao:0.82,area:72},
+    {num:604,   name:'Henrique Luz',  fracao:0.78,area:68},
+  ],
+};
+
+const avColors=[['#E0E7FF','#4338CA'],['#DCFCE7','#166534'],['#FEE2E2','#DC2626'],['#F3E8FF','#7C3AED'],['#FEF9C3','#B45309'],['#E0F2FE','#0284C7'],['#FFE4E6','#BE123C'],['#D1FAE5','#065F46']];
+function initials(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('');}
+function fmtBRL(v){return 'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function parseVal(){
+  const raw=document.getElementById('inp-valor').value.replace(/\./g,'').replace(',','.');
+  return parseFloat(raw)||0;
+}
+
+function setScope(s, el){
+  scope=s;
+  document.querySelectorAll('.scope-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const hints={
+    geral:'Rateado entre todas as unidades do condomínio',
+    bloco:'Rateado apenas entre as unidades do bloco selecionado',
+    unidade:'Cobrado diretamente da unidade selecionada — sem rateio',
+  };
+  document.getElementById('scope-hint').textContent=hints[s];
+  document.getElementById('field-bloco').style.display=s==='bloco'||s==='unidade'?'flex':'none';
+  document.getElementById('field-unidade').style.display=s==='unidade'?'flex':'none';
+  document.getElementById('field-rateio').style.display=s==='unidade'?'none':'flex';
+  renderPreview();
+}
+
+function setRateio(r, el){
+  rateio=r;
+  document.querySelectorAll('.rateio-opt').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const hints={
+    fracao:'Cada unidade paga proporcionalmente à sua fração ideal no condomínio',
+    igual:'Cada unidade paga o mesmo valor independente do tamanho',
+    area:'Cada unidade paga proporcionalmente à sua área em m²',
+  };
+  document.getElementById('rateio-hint').textContent=hints[r];
+  renderPreview();
+}
+
+function getUnidades(){
+  if(scope==='geral') return [...unidades.A,...unidades.B];
+  const b=document.getElementById('sel-bloco').value;
+  if(!b) return [];
+  return unidades[b]||[];
+}
+
+function calcValorPor(u, total, unids){
+  if(rateio==='igual') return total/unids.length;
+  if(rateio==='area'){
+    const totalArea=unids.reduce((s,x)=>s+x.area,0);
+    return total*(u.area/totalArea);
+  }
+  // fracao
+  const totalFrac=unids.reduce((s,x)=>s+x.fracao,0);
+  return total*(u.fracao/totalFrac);
+}
+
+function renderPreview(){
+  const val=parseVal();
+  const cat=document.getElementById('sel-cat').value;
+  const desc=document.getElementById('inp-desc').value;
+
+  if(scope==='unidade'){
+    const sel=document.getElementById('sel-unidade').value;
+    if(!val||!sel){showEmpty();return;}
+    document.getElementById('preview-empty').style.display='none';
+    const pc=document.getElementById('preview-content');
+    pc.style.display='flex';
+
+    document.getElementById('ph-title').textContent='Despesa por unidade';
+    document.getElementById('ph-sub').textContent=`${cat} · Cobrado diretamente de ${sel.split('·')[1]?.trim()||sel}`;
+
+    document.getElementById('summary-row').innerHTML=`
+      <div class="sum-card"><div class="sum-lbl">Valor total</div><div class="sum-val">${fmtBRL(val)}</div><div class="sum-sub">Sem rateio</div></div>
+      <div class="sum-card"><div class="sum-lbl">Unidade</div><div class="sum-val" style="font-size:13px">${sel.split('·')[0].trim()}</div><div class="sum-sub">${sel.split('·')[1]?.trim()||''}</div></div>
+      <div class="sum-card"><div class="sum-lbl">Vencimento</div><div class="sum-val" style="font-size:13px">15/04/2026</div><div class="sum-sub">Próximo boleto</div></div>`;
+
+    document.getElementById('rateio-list').innerHTML=`
+      <div class="rl-section">
+        <div class="rl-sec-header"><span class="rl-sec-title">Lançamento direto</span><span class="rl-sec-total">${fmtBRL(val)}</span></div>
+        <div class="rl-row highlight">
+          <div class="rl-av" style="background:#E0E7FF;color:#4338CA">${initials(sel.split('·')[1]?.trim()||'UN')}</div>
+          <div style="flex:1;min-width:0">
+            <div class="rl-name">${sel.split('·')[1]?.trim()||sel}</div>
+            <div class="rl-sub">${sel.split('·')[0].trim()} · ${cat}</div>
+          </div>
+          <div class="rl-val" style="color:#111">${fmtBRL(val)}</div>
+        </div>
+        ${desc?`<div style="margin-top:10px;padding:10px;background:#F8FAFC;border-radius:7px;font-size:11px;color:#64748B;border:1px solid #F0F0F0">"${desc}"</div>`:''}
+      </div>`;
+
+    document.getElementById('footer-info').textContent=`Despesa de ${fmtBRL(val)} cobrada diretamente · ${cat}`;
+    document.getElementById('footer-total').textContent=fmtBRL(val);
+    return;
+  }
+
+  const unids=getUnidades();
+  if(!val||!unids.length){showEmpty();return;}
+
+  document.getElementById('preview-empty').style.display='none';
+  const pc=document.getElementById('preview-content');
+  pc.style.display='flex';
+
+  const scopeLabel=scope==='geral'?'Condomínio geral':`Bloco ${document.getElementById('sel-bloco').value}`;
+  document.getElementById('ph-title').textContent=`Rateio · ${scopeLabel}`;
+  document.getElementById('ph-sub').textContent=`${cat}${desc?' · '+desc.slice(0,40):''} · ${unids.length} unidades`;
+
+  const max=Math.max(...unids.map(u=>calcValorPor(u,val,unids)));
+  const rateioLabel={fracao:'Fração ideal',igual:'Partes iguais',area:'Por m²'}[rateio];
+
+  document.getElementById('summary-row').innerHTML=`
+    <div class="sum-card"><div class="sum-lbl">Total da despesa</div><div class="sum-val">${fmtBRL(val)}</div><div class="sum-sub">${cat}</div></div>
+    <div class="sum-card"><div class="sum-lbl">Unidades</div><div class="sum-val">${unids.length}</div><div class="sum-sub">${scopeLabel}</div></div>
+    <div class="sum-card"><div class="sum-lbl">Menor / Maior cota</div><div class="sum-val" style="font-size:12px">${fmtBRL(Math.min(...unids.map(u=>calcValorPor(u,val,unids))))} · ${fmtBRL(max)}</div><div class="sum-sub">${rateioLabel}</div></div>`;
+
+  // agrupar por bloco
+  let html='';
+  const groups=scope==='geral'?{A:unidades.A,B:unidades.B}:{[document.getElementById('sel-bloco').value]:unids};
+
+  Object.entries(groups).forEach(([bid,units])=>{
+    const blocoTotal=units.reduce((s,u)=>s+calcValorPor(u,val,unids),0);
+    html+=`<div class="rl-section">
+      <div class="rl-sec-header">
+        <span class="rl-sec-title">${scope==='geral'?'Bloco '+bid:document.getElementById('sel-bloco').value+' · Todas as unidades'}</span>
+        <span class="rl-sec-total">${fmtBRL(blocoTotal)}</span>
+      </div>`;
+    units.forEach((u,i)=>{
+      const v=calcValorPor(u,val,unids);
+      const pct=Math.round(v/max*100);
+      const avc=avColors[i%avColors.length];
+      const fracaoInfo=rateio==='fracao'?`${u.fracao}%`:rateio==='area'?`${u.area}m²`:'1/'+unids.length;
+      html+=`<div class="rl-row">
+        <div class="rl-av" style="background:${avc[0]};color:${avc[1]}">${initials(u.name)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="rl-name">${u.name}</div>
+          <div class="rl-sub">${u.num==='COB'?'Cobertura':'Apto '+u.num}</div>
+        </div>
+        <div class="rl-fracao">${fracaoInfo}</div>
+        <div class="rl-bar-wrap"><div class="rl-bar" style="width:${pct}%"></div></div>
+        <div class="rl-val">${fmtBRL(v)}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+
+  document.getElementById('rateio-list').innerHTML=html;
+  document.getElementById('footer-info').textContent=`${unids.length} unidades · ${rateioLabel} · ${cat}`;
+  document.getElementById('footer-total').textContent=fmtBRL(val)+' total';
+}
+
+function showEmpty(){
+  document.getElementById('preview-empty').style.display='flex';
+  document.getElementById('preview-content').style.display='none';
+  document.getElementById('footer-info').textContent='Selecione o escopo e valor para calcular o rateio';
+  document.getElementById('footer-total').textContent='';
+}
+
+function salvar(){
+  const val=parseVal();
+  if(!val){alert('Informe o valor da despesa');return;}
+  alert('Despesa lançada com sucesso!\n\n'+fmtBRL(val)+' · '+document.getElementById('sel-cat').value);
+}
+</script>

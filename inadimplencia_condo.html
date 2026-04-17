@@ -1,0 +1,605 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.wrap{background:#fff;border-radius:12px;border:1px solid #E8E8E8;overflow:hidden;display:flex;flex-direction:column;min-height:860px}
+.topbar{background:#fff;border-bottom:1px solid #F0F0F0;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-title{font-size:14px;font-weight:600;color:#111}
+.tb-sub{font-size:11px;color:#94A3B8;margin-top:1px}
+.btn{height:30px;padding:0 12px;font-size:11px;font-weight:500;border-radius:6px;cursor:pointer;border:1px solid #E2E8F0;background:#fff;color:#111;transition:all .15s}
+.btn:hover{background:#F8FAFC}
+.btn.dark{background:#111;color:#fff;border-color:#111}
+.btn.dark:hover{background:#333}
+.btn.red{background:#FEF2F2;color:#DC2626;border-color:#FECACA}
+.btn.red:hover{background:#FEE2E2}
+.insight-bar{background:#fff;border-bottom:1px solid #F0F0F0;padding:8px 20px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0}
+.ins{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;border:1px solid;flex-shrink:0;cursor:pointer;transition:all .15s;user-select:none}
+.ins.active{box-shadow:0 0 0 2px #111}
+.ins-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ins-icon svg{width:12px;height:12px}
+.ins-title{font-size:11px;font-weight:600;white-space:nowrap}
+.ins-body{font-size:10px;opacity:.8;white-space:nowrap}
+.body{display:grid;grid-template-columns:1fr 308px;flex:1;overflow:hidden;min-height:0}
+.left{display:flex;flex-direction:column;overflow:hidden}
+.view-toggle{display:flex;align-items:center;gap:8px;padding:10px 20px;background:#fff;border-bottom:1px solid #F0F0F0;flex-shrink:0}
+.vt-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;border:1px solid #E2E8F0;background:#fff;font-size:11px;font-weight:500;color:#64748B;cursor:pointer;transition:all .15s}
+.vt-btn.on{background:#111;color:#fff;border-color:#111}
+.vt-btn svg{width:13px;height:13px}
+.search-bar{display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:0 12px;height:32px;flex:1}
+.search-bar svg{width:12px;height:12px;color:#94A3B8;flex-shrink:0}
+.search-bar input{border:none;outline:none;font-size:11px;color:#111;background:transparent;width:100%}
+.search-bar input::placeholder{color:#CBD5E1}
+.main-area{flex:1;overflow-y:auto;background:#F8FAFC;padding:20px;display:flex;flex-direction:column;gap:16px}
+/* PLANTA */
+.bloco-wrap{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px}
+.bloco-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bloco-name{font-size:12px;font-weight:600;color:#111;display:flex;align-items:center;gap:7px}
+.bloco-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:#FEF2F2;color:#DC2626;font-weight:600}
+.floor-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;justify-content:flex-start}
+.floor-lbl{font-size:10px;color:#94A3B8;width:28px;text-align:right;font-weight:500;flex-shrink:0}
+.floor-units{display:flex;gap:5px}
+.apt{width:64px;height:54px;border-radius:8px;border:1.5px solid;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .15s;position:relative;user-select:none}
+.apt:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.1)}
+.apt.ok{background:#F0FDF4;border-color:#86EFAC}
+.apt.late-low{background:#FFF7ED;border-color:#FDBA74}
+.apt.late-mid{background:#FEF2F2;border-color:#FCA5A5}
+.apt.late-high{background:#FEF2F2;border-color:#DC2626;border-width:2px}
+.apt.selected{transform:translateY(-2px)}
+.apt.ok.selected{box-shadow:0 0 0 3px #16A34A}
+.apt.late-low.selected{box-shadow:0 0 0 3px #F97316}
+.apt.late-mid.selected{box-shadow:0 0 0 3px #DC2626}
+.apt.late-high.selected{box-shadow:0 0 0 3px #991B1B}
+.apt-num{font-size:11px;font-weight:700}
+.apt.ok .apt-num{color:#166534}
+.apt.late-low .apt-num{color:#C2410C}
+.apt.late-mid .apt-num{color:#991B1B}
+.apt.late-high .apt-num{color:#7F1D1D}
+.apt-name{font-size:9px;text-align:center;padding:0 2px;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:60px}
+.apt.ok .apt-name{color:#16A34A}
+.apt.late-low .apt-name{color:#EA580C}
+.apt.late-mid .apt-name{color:#DC2626}
+.apt.late-high .apt-name{color:#991B1B}
+.apt-dias{font-size:8px;font-weight:700;position:absolute;top:3px;right:4px}
+.apt.ok .apt-dias{color:#16A34A}
+.apt.late-low .apt-dias{color:#F97316}
+.apt.late-mid .apt-dias{color:#DC2626}
+.apt.late-high .apt-dias{color:#991B1B}
+.cob-apt{border-radius:8px;border:1.5px solid;cursor:pointer;display:flex;align-items:center;gap:10px;padding:0 14px;height:44px;transition:all .15s}
+.cob-apt:hover{transform:translateY(-1px)}
+.leg-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#64748B}
+.leg-sq{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+/* LISTA */
+.list-wrap{flex:1;overflow-y:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead th{padding:9px 14px;font-size:10px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #F0F0F0;background:#fff;position:sticky;top:0;text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid #F7F7F7;cursor:pointer;transition:background .1s}
+tbody tr:hover{background:#FAFAFA}
+tbody tr.selected{background:#FFF5F5}
+tbody td{padding:10px 14px;font-size:12px;color:#111;vertical-align:middle}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px}
+.pill-30{background:#FFF7ED;color:#C2410C}
+.pill-60{background:#FEF2F2;color:#DC2626}
+.pill-90{background:#FEF2F2;color:#991B1B}
+.pill-ok{background:#F0FDF4;color:#166534}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.act{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+tbody tr:hover .act{opacity:1}
+tbody tr.selected .act{opacity:1}
+.icon-btn{width:26px;height:26px;border:1px solid #E2E8F0;border-radius:6px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:#F1F5F9}
+.icon-btn svg{width:11px;height:11px;color:#64748B}
+/* RPANEL */
+.rpanel{background:#fff;border-left:1px solid #F0F0F0;display:flex;flex-direction:column;overflow:hidden}
+.rp-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center}
+.rp-empty svg{width:32px;height:32px;color:#CBD5E1}
+.rp-content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.rp-header{padding:14px 16px;border-bottom:1px solid #F0F0F0;flex-shrink:0}
+.rp-tabs{display:flex;border-bottom:1px solid #F0F0F0;flex-shrink:0}
+.rp-tab{flex:1;padding:8px 4px;font-size:10px;font-weight:500;color:#94A3B8;cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .15s}
+.rp-tab.on{color:#111;border-bottom-color:#111}
+.tab-body{padding:12px 16px;overflow-y:auto;flex:1}
+.metric{background:#F8FAFC;border-radius:6px;padding:8px 10px}
+.metric-l{font-size:10px;color:#94A3B8;margin-bottom:2px}
+.metric-v{font-size:14px;font-weight:700;color:#111}
+.metric-s{font-size:9px;color:#94A3B8;margin-top:1px}
+.sec-lbl{font-size:10px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F7F7F7;font-size:11px}
+.hist-row:last-child{border:none}
+.regua-step{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #F7F7F7;align-items:flex-start}
+.regua-step:last-child{border:none}
+.regua-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.acao-btn{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #E2E8F0;border-radius:7px;background:#fff;cursor:pointer;font-size:11px;font-weight:500;color:#374151;transition:all .15s;text-align:left;width:100%}
+.acao-btn:hover{background:#F8FAFC;border-color:#94A3B8}
+.acao-btn.primary{background:#111;color:#fff;border-color:#111;grid-column:1/-1}
+.acao-btn svg{width:12px;height:12px;flex-shrink:0}
+/* MODAL */
+.modal-bg{background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:20px;min-height:520px}
+.modal{background:#fff;border-radius:12px;padding:24px;width:460px;border:1px solid #E2E8F0}
+.modal-title{font-size:15px;font-weight:600;color:#111;margin-bottom:4px}
+.modal-sub{font-size:11px;color:#94A3B8;margin-bottom:18px}
+.mf{margin-bottom:13px}
+.ml{font-size:11px;font-weight:500;color:#374151;margin-bottom:5px;display:block}
+.mi{width:100%;height:36px;border:1px solid #E2E8F0;border-radius:7px;padding:0 12px;font-size:12px;color:#111;outline:none}
+.mi:focus{border-color:#111}
+.ms{width:100%;height:36px;border:1px solid #E2E8F0;border-radius:7px;padding:0 12px;font-size:12px;color:#111;outline:none;appearance:none;background:#fff;cursor:pointer}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid #F0F0F0}
+.notif-opts{display:flex;gap:6px;flex-wrap:wrap}
+.notif-opt{padding:5px 10px;font-size:11px;border:1px solid #E2E8F0;border-radius:20px;cursor:pointer;color:#64748B;background:#fff;transition:all .15s;font-weight:500}
+.notif-opt.on{background:#111;color:#fff;border-color:#111}
+.aging-bar{height:6px;border-radius:3px;background:#F0F0F0;overflow:hidden;margin-top:4px}
+.aging-seg{height:100%;border-radius:3px}
+</style>
+
+<div class="wrap" id="app">
+  <div class="topbar">
+    <div>
+      <div class="tb-title">Inadimplência</div>
+      <div class="tb-sub">Residencial das Flores · Abr 2026</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn" onclick="showModal('notif-all')">Notificar todos</button>
+      <button class="btn dark" onclick="showModal('acordo')">Gerar acordo</button>
+    </div>
+  </div>
+
+  <div class="insight-bar">
+    <div class="ins active" id="ins-all" style="background:#F8FAFC;border-color:#E2E8F0" onclick="filterIns('all',this)">
+      <div class="ins-icon" style="background:#F1F5F9"><svg viewBox="0 0 16 16" fill="none" stroke="#475569" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 11v.5"/></svg></div>
+      <div><div class="ins-title" style="color:#374151">Total em aberto</div><div class="ins-body" style="color:#64748B">10 unidades · R$ 15.340</div></div>
+    </div>
+    <div class="ins" id="ins-30" style="background:#FFF7ED;border-color:#FDBA74" onclick="filterIns('30',this)">
+      <div class="ins-icon" style="background:#FEF3C7"><svg viewBox="0 0 16 16" fill="none" stroke="#B45309" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2"/></svg></div>
+      <div><div class="ins-title" style="color:#B45309">1–30 dias</div><div class="ins-body" style="color:#B45309">4 unidades · R$ 2.080</div></div>
+    </div>
+    <div class="ins" id="ins-60" style="background:#FEF2F2;border-color:#FECACA" onclick="filterIns('60',this)">
+      <div class="ins-icon" style="background:#FEE2E2"><svg viewBox="0 0 16 16" fill="none" stroke="#DC2626" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 11v.5"/></svg></div>
+      <div><div class="ins-title" style="color:#DC2626">31–60 dias</div><div class="ins-body" style="color:#DC2626">3 unidades · R$ 3.120</div></div>
+    </div>
+    <div class="ins" id="ins-90" style="background:#FEF2F2;border-color:#DC2626" onclick="filterIns('90',this)">
+      <div class="ins-icon" style="background:#FEE2E2"><svg viewBox="0 0 16 16" fill="none" stroke="#991B1B" stroke-width="1.5"><path d="M8 2l6 12H2z"/><path d="M8 8v3M8 13v.5"/></svg></div>
+      <div><div class="ins-title" style="color:#991B1B">+60 dias</div><div class="ins-body" style="color:#991B1B">3 unidades · R$ 10.140</div></div>
+    </div>
+    <div class="ins" style="background:#EFF6FF;border-color:#BFDBFE;margin-left:auto" onclick="showModal('regua')">
+      <div class="ins-icon" style="background:#DBEAFE"><svg viewBox="0 0 16 16" fill="none" stroke="#1D4ED8" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg></div>
+      <div><div class="ins-title" style="color:#1D4ED8">Régua de cobrança</div><div class="ins-body" style="color:#1D4ED8">3 etapas ativas</div></div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="left">
+      <div class="view-toggle">
+        <button class="vt-btn on" id="vt-planta" onclick="setView('planta',this)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          Planta viva
+        </button>
+        <button class="vt-btn" id="vt-lista" onclick="setView('lista',this)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h6"/></svg>
+          Lista
+        </button>
+        <div class="search-bar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4"/><path d="M10 10l3 3"/></svg>
+          <input type="text" placeholder="Buscar morador ou unidade…" oninput="searchUnits(this.value)">
+        </div>
+        <select style="height:30px;border:1px solid #E2E8F0;border-radius:6px;padding:0 10px;font-size:11px;color:#64748B;background:#fff;appearance:none;cursor:pointer;outline:none" onchange="sortUnits(this.value)">
+          <option value="dias">Ordenar: Mais antigo</option>
+          <option value="valor">Ordenar: Maior valor</option>
+          <option value="nome">Ordenar: Nome</option>
+        </select>
+      </div>
+
+      <div class="main-area" id="main-area"></div>
+    </div>
+
+    <div class="rpanel">
+      <div class="rp-empty" id="rp-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div style="font-size:12px;font-weight:500;color:#374151">Selecione uma unidade</div>
+        <div style="font-size:11px;color:#94A3B8;line-height:1.6;max-width:200px">Clique em um apartamento ou linha para ver detalhes e ações</div>
+      </div>
+      <div class="rp-content" id="rp-content" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-area" style="display:none">
+  <div class="modal-bg" id="modal-bg" onclick="if(event.target===this)hideModal()">
+    <div class="modal" id="modal-box"></div>
+  </div>
+</div>
+
+<script>
+const avColors=[['#E0E7FF','#4338CA'],['#DCFCE7','#166534'],['#FEE2E2','#DC2626'],['#F3E8FF','#7C3AED'],['#FEF9C3','#B45309'],['#E0F2FE','#0284C7'],['#FFE4E6','#BE123C'],['#D1FAE5','#065F46']];
+function initials(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('');}
+function fmtBRL(v){return'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+
+const units=[
+  {id:1,num:'COB',name:'Roberto Nunes',bloco:'A',dias:92,valor:3120,multa:312,juros:187,total:3619,status:'late-high'},
+  {id:2,num:'802',name:'Diego Ferreira',bloco:'A',dias:74,valor:1040,multa:104,juros:58,total:1202,status:'late-high'},
+  {id:3,num:'704',name:'Lucas Pinto',bloco:'A',dias:61,valor:520,multa:52,juros:24,total:596,status:'late-high'},
+  {id:4,num:'602',name:'João Oliveira',bloco:'A',dias:45,valor:1040,multa:52,juros:28,total:1120,status:'late-mid'},
+  {id:5,num:'203',name:'Natália Costa',bloco:'A',dias:38,valor:520,multa:26,juros:12,total:558,status:'late-mid'},
+  {id:6,num:'304',name:'Rodrigo Santos',bloco:'B',dias:33,valor:1560,multa:46,juros:30,total:1636,status:'late-mid'},
+  {id:7,num:'501',name:'Ana Lima',bloco:'A',dias:22,valor:520,multa:0,juros:8,total:528,status:'late-low'},
+  {id:8,num:'102',name:'João Batista',bloco:'B',dias:18,valor:520,multa:0,juros:5,total:525,status:'late-low'},
+  {id:9,num:'403',name:'Fernanda Melo',bloco:'B',dias:12,valor:520,multa:0,juros:3,total:523,status:'late-low'},
+  {id:10,num:'701',name:'Camilo Souza',bloco:'B',dias:8,valor:520,multa:0,juros:2,total:522,status:'late-low'},
+];
+
+const allBlocoAUnits=[
+  {num:'COB',late:true},{num:'801',late:false},{num:'802',late:true},{num:'803',late:false},{num:'804',late:false},
+  {num:'701',late:false},{num:'702',late:false},{num:'703',late:false},{num:'704',late:true},
+  {num:'601',late:false},{num:'602',late:true},{num:'603',late:false},{num:'604',late:false},
+  {num:'501',late:true},{num:'502',late:false},{num:'503',late:false},{num:'504',late:false},
+  {num:'401',late:false},{num:'402',late:false},{num:'403',late:false},{num:'404',late:false},
+  {num:'301',late:false},{num:'302',late:false},{num:'303',late:false},{num:'304',late:false},
+  {num:'201',late:false},{num:'202',late:false},{num:'203',late:true},{num:'204',late:false},
+  {num:'101',late:false},{num:'102',late:false},{num:'103',late:false},{num:'104',late:false},
+];
+
+let currentView='planta';
+let activeFilter='all';
+let selectedUnit=null;
+let filteredUnits=[...units];
+
+function getUnitStatus(u){
+  if(activeFilter==='30') return u.dias<=30&&u.dias>0;
+  if(activeFilter==='60') return u.dias>30&&u.dias<=60;
+  if(activeFilter==='90') return u.dias>60;
+  return true;
+}
+
+function getAptClass(num,bloco){
+  if(bloco==='A'){
+    const u=units.find(x=>x.num===num&&x.bloco==='A');
+    if(!u) return 'ok';
+    if(activeFilter!=='all'){
+      if(activeFilter==='30'&&u.dias<=30) return u.status;
+      if(activeFilter==='60'&&u.dias>30&&u.dias<=60) return u.status;
+      if(activeFilter==='90'&&u.dias>60) return u.status;
+      return 'ok';
+    }
+    return u.status;
+  }
+  return 'ok';
+}
+
+function renderPlanta(){
+  const ma=document.getElementById('main-area');
+  const floors=[
+    {lbl:'COB',nums:['COB'],cob:true},
+    {lbl:'8º',nums:['801','802','803','804']},
+    {lbl:'7º',nums:['701','702','703','704']},
+    {lbl:'6º',nums:['601','602','603','604']},
+    {lbl:'5º',nums:['501','502','503','504']},
+    {lbl:'4º',nums:['401','402','403','404']},
+    {lbl:'3º',nums:['301','302','303','304']},
+    {lbl:'2º',nums:['201','202','203','204']},
+    {lbl:'1º',nums:['101','102','103','104']},
+  ];
+
+  let html=`<div class="bloco-wrap">
+    <div class="bloco-hdr">
+      <div class="bloco-name">Bloco A <span style="font-size:10px;font-weight:400;color:#94A3B8">33 unidades</span></div>
+      <span class="bloco-badge">6 inadimplentes</span>
+    </div>
+    <div class="leg-row">
+      <div class="leg"><div class="leg-sq" style="background:#F0FDF4;border:1.5px solid #86EFAC"></div>Em dia</div>
+      <div class="leg"><div class="leg-sq" style="background:#FFF7ED;border:1.5px solid #FDBA74"></div>1–30d</div>
+      <div class="leg"><div class="leg-sq" style="background:#FEF2F2;border:1.5px solid #FCA5A5"></div>31–60d</div>
+      <div class="leg"><div class="leg-sq" style="background:#FEF2F2;border:2px solid #DC2626"></div>+60d</div>
+    </div>`;
+
+  floors.forEach(({lbl,nums,cob})=>{
+    if(cob){
+      const u=units.find(x=>x.num==='COB'&&x.bloco==='A');
+      const st=getAptClass('COB','A');
+      const cobW=64*4+5*3;
+      const dias=u?u.dias:0;
+      const bdrColor=st==='ok'?'#86EFAC':st==='late-low'?'#FDBA74':st==='late-mid'?'#FCA5A5':'#DC2626';
+      const bgColor=st==='ok'?'#F0FDF4':st==='late-low'?'#FFF7ED':'#FEF2F2';
+      const textColor=st==='ok'?'#166534':st==='late-low'?'#C2410C':st==='late-mid'?'#991B1B':'#7F1D1D';
+      html+=`<div class="floor-row"><div class="floor-lbl">COB</div><div class="floor-units">
+        <div class="cob-apt ${selectedUnit&&selectedUnit.num==='COB'?'selected':''}" style="width:${cobW}px;background:${bgColor};border-color:${bdrColor};border-width:${st==='late-high'?'2':'1.5'}px" onclick="selectUnit('COB','A')">
+          <div style="font-size:11px;font-weight:700;color:${textColor}">Cobertura</div>
+          <div style="font-size:9px;color:${textColor}">${u?u.name.split(' ')[0]:''}</div>
+          ${u?`<div style="font-size:9px;font-weight:700;color:${textColor};margin-left:auto">${dias}d</div>`:''}
+        </div>
+      </div></div>`;
+    } else {
+      html+=`<div class="floor-row"><div class="floor-lbl">${lbl}</div><div class="floor-units">`;
+      nums.forEach(n=>{
+        const u=units.find(x=>x.num===n&&x.bloco==='A');
+        const st=getAptClass(n,'A');
+        const dias=u?u.dias:0;
+        const sel=selectedUnit&&selectedUnit.num===n&&selectedUnit.bloco==='A';
+        html+=`<div class="apt ${st}${sel?' selected':''}" onclick="selectUnit('${n}','A')">
+          ${u?`<div class="apt-dias">${dias}d</div>`:''}
+          <div class="apt-num">${n}</div>
+          <div class="apt-name">${u?u.name.split(' ')[0]:'—'}</div>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    }
+  });
+  html+=`</div>`;
+
+  // Bloco B resumo
+  html+=`<div class="bloco-wrap">
+    <div class="bloco-hdr">
+      <div class="bloco-name">Bloco B <span style="font-size:10px;font-weight:400;color:#94A3B8">33 unidades</span></div>
+      <span class="bloco-badge">4 inadimplentes</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">`;
+  const blocoB=units.filter(x=>x.bloco==='B');
+  for(let a=8;a>=1;a--){
+    for(let u=1;u<=4;u++){
+      const n=`${a*100+u}`;
+      const unit=blocoB.find(x=>x.num===n);
+      const st=unit?unit.status:'ok';
+      if(activeFilter!=='all'&&unit){
+        const show=(activeFilter==='30'&&unit.dias<=30)||(activeFilter==='60'&&unit.dias>30&&unit.dias<=60)||(activeFilter==='90'&&unit.dias>60);
+        const stFinal=show?st:'ok';
+        const sel=selectedUnit&&selectedUnit.num===n&&selectedUnit.bloco==='B';
+        html+=`<div class="apt ${stFinal}${sel?' selected':''}" style="width:56px;height:48px" onclick="selectUnit('${n}','B')">
+          ${unit&&show?`<div class="apt-dias">${unit.dias}d</div>`:''}
+          <div class="apt-num" style="font-size:10px">${n}</div>
+          <div class="apt-name">${unit&&show?unit.name.split(' ')[0]:'—'}</div>
+        </div>`;
+      } else {
+        const sel=selectedUnit&&selectedUnit.num===n&&selectedUnit.bloco==='B';
+        html+=`<div class="apt ${unit?unit.status:'ok'}${sel?' selected':''}" style="width:56px;height:48px" onclick="selectUnit('${n}','B')">
+          ${unit?`<div class="apt-dias">${unit.dias}d</div>`:''}
+          <div class="apt-num" style="font-size:10px">${n}</div>
+          <div class="apt-name">${unit?unit.name.split(' ')[0]:'—'}</div>
+        </div>`;
+      }
+    }
+  }
+  html+=`</div></div>`;
+  ma.innerHTML=html;
+}
+
+function renderLista(){
+  const ma=document.getElementById('main-area');
+  ma.style.padding='0';
+  ma.style.background='#fff';
+  ma.innerHTML=`<div class="list-wrap"><table>
+    <thead><tr>
+      <th style="width:36px"><input type="checkbox" style="cursor:pointer"></th>
+      <th>Morador / Unidade</th>
+      <th style="width:60px">Dias</th>
+      <th style="width:110px">Valor orig.</th>
+      <th style="width:110px">Total c/ encargos</th>
+      <th style="width:90px">Aging</th>
+      <th style="width:80px"></th>
+    </tr></thead>
+    <tbody>${filteredUnits.map((u,i)=>{
+      const avc=avColors[i%avColors.length];
+      const agingW=Math.min(100,Math.round(u.dias/90*100));
+      const agingColor=u.status==='late-high'?'#DC2626':u.status==='late-mid'?'#F97316':'#FDBA74';
+      const pillCls=u.status==='late-high'?'pill-90':u.status==='late-mid'?'pill-60':'pill-30';
+      const pillLbl=u.dias>60?'+60d':u.dias>30?'31-60d':'1-30d';
+      const sel=selectedUnit&&selectedUnit.id===u.id?'selected':'';
+      return`<tr class="${sel}" onclick="selectUnit('${u.num}','${u.bloco}')">
+        <td><input type="checkbox" style="cursor:pointer" onclick="event.stopPropagation()"></td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="av" style="background:${avc[0]};color:${avc[1]}">${initials(u.name)}</div>
+          <div><div style="font-size:12px;font-weight:500;color:#111">${u.name}</div>
+          <div style="font-size:10px;color:#94A3B8">Bloco ${u.bloco} · Apto ${u.num}</div></div>
+        </div></td>
+        <td><span class="pill ${pillCls}">${u.dias}d</span></td>
+        <td style="font-size:12px;color:#111">${fmtBRL(u.valor)}</td>
+        <td style="font-size:12px;font-weight:700;color:#DC2626">${fmtBRL(u.total)}</td>
+        <td><div style="font-size:9px;color:#94A3B8;margin-bottom:2px">${agingW}%</div><div class="aging-bar"><div class="aging-seg" style="width:${agingW}%;background:${agingColor}"></div></div></td>
+        <td><div class="act">
+          <div class="icon-btn" title="Notificar" onclick="event.stopPropagation();showModal('notif-single','${u.num}','${u.bloco}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1a5 5 0 0 1 5 5c0 3 1 4 1 4H2s1-1 1-4a5 5 0 0 1 5-5zm-1 11h2"/></svg></div>
+          <div class="icon-btn" title="Acordo" onclick="event.stopPropagation();showModal('acordo')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8l4 4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg></div>
+        </div></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function selectUnit(num,bloco){
+  const u=units.find(x=>x.num===num&&x.bloco===bloco);
+  selectedUnit=u||{num,bloco};
+  if(currentView==='planta') renderPlanta();
+  else renderLista();
+  if(!u){document.getElementById('rp-empty').style.display='flex';document.getElementById('rp-content').style.display='none';return;}
+  showRpanel(u);
+}
+
+function showRpanel(u){
+  document.getElementById('rp-empty').style.display='none';
+  const rc=document.getElementById('rp-content');
+  rc.style.display='flex';
+  const avc=avColors[u.id%avColors.length];
+  const pillCls=u.status==='late-high'?'pill-90':u.status==='late-mid'?'pill-60':'pill-30';
+  const pillLbl=u.dias>60?`+60 dias`:u.dias>30?`31–60 dias`:`1–30 dias`;
+  const riskColor=u.dias>60?'#DC2626':u.dias>30?'#F97316':'#B45309';
+  const riskBg=u.dias>60?'#FEF2F2':u.dias>30?'#FFF7ED':'#FEF9C3';
+  const meses=['Abr 2026','Mar 2026','Fev 2026','Jan 2026','Dez 2025','Nov 2025'];
+  const pags=meses.map((m,i)=>{
+    const s=i===0?'Vencido':u.dias>60&&i===1?'Vencido':'Pago';
+    const c=s==='Pago'?'#16A34A':'#DC2626';
+    const bg=s==='Pago'?'#F0FDF4':'#FEF2F2';
+    return{m,s,c,bg};
+  });
+
+  rc.innerHTML=`
+    <div class="rp-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#111">${u.num==='COB'?'Cobertura':'Apto '+u.num}</div>
+          <div style="font-size:10px;color:#94A3B8">Bloco ${u.bloco} · Residencial das Flores</div>
+        </div>
+        <span class="pill ${pillCls}">${u.dias}d atraso</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;padding:9px;background:#F8FAFC;border-radius:8px;border:1px solid #F0F0F0;margin-bottom:8px">
+        <div class="av" style="background:${avc[0]};color:${avc[1]}">${initials(u.name)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:#111">${u.name}</div>
+          <div style="font-size:10px;color:#94A3B8">Proprietário</div>
+          <div style="display:flex;gap:5px;margin-top:5px">
+            <button style="font-size:10px;padding:2px 7px;border:1px solid #E2E8F0;border-radius:20px;background:#fff;color:#374151;cursor:pointer">E-mail</button>
+            <button style="font-size:10px;padding:2px 7px;border:1px solid #E2E8F0;border-radius:20px;background:#fff;color:#374151;cursor:pointer">WhatsApp</button>
+            <button style="font-size:10px;padding:2px 7px;border:1px solid #E2E8F0;border-radius:20px;background:#fff;color:#374151;cursor:pointer">Ligar</button>
+          </div>
+        </div>
+      </div>
+      ${u.dias>60?`<div style="font-size:11px;color:${riskColor};background:${riskBg};border-radius:6px;padding:7px 10px;border:1px solid ${riskColor}40">Risco alto · ${u.dias} dias sem pagamento. Considere notificação formal.</div>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 14px;border-bottom:1px solid #F0F0F0;flex-shrink:0">
+      <div class="metric"><div class="metric-l">Valor original</div><div class="metric-v" style="font-size:13px">${fmtBRL(u.valor)}</div></div>
+      <div class="metric"><div class="metric-l">Total c/ encargos</div><div class="metric-v" style="font-size:13px;color:#DC2626">${fmtBRL(u.total)}</div></div>
+      <div class="metric"><div class="metric-l">Multa (${u.multa>0?'2%':'—'})</div><div class="metric-v" style="font-size:13px">${fmtBRL(u.multa)}</div></div>
+      <div class="metric"><div class="metric-l">Juros (0,033%/d)</div><div class="metric-v" style="font-size:13px">${fmtBRL(u.juros)}</div></div>
+    </div>
+    <div style="padding:10px 14px;border-bottom:1px solid #F0F0F0;flex-shrink:0">
+      <div style="font-size:10px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Ações rápidas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+        <button class="acao-btn primary" onclick="showModal('notif-single')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1a5 5 0 0 1 5 5c0 3 1 4 1 4H2s1-1 1-4a5 5 0 0 1 5-5zm-1 11h2"/></svg>Enviar notificação</button>
+        <button class="acao-btn" onclick="showModal('acordo')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8l4 4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>Gerar acordo</button>
+        <button class="acao-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8l4 4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M9 11l2 2 4-4"/></svg>Gerar boleto</button>
+        <button class="acao-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h12l2 2v8l-2 2H8l-4 4v-4H2V2z"/></svg>Registrar ocorr.</button>
+      </div>
+    </div>
+    <div class="rp-tabs">
+      <div class="rp-tab on" onclick="showRpTab('hist',this)">Histórico</div>
+      <div class="rp-tab" onclick="showRpTab('regua',this)">Régua</div>
+      <div class="rp-tab" onclick="showRpTab('docs',this)">Docs</div>
+    </div>
+    <div id="rptab-hist" class="tab-body">
+      <div class="sec-lbl">Histórico de pagamentos</div>
+      ${pags.map(p=>`<div class="hist-row"><div style="display:flex;align-items:center;gap:8px"><div style="width:7px;height:7px;border-radius:50%;background:${p.c}"></div><div style="font-size:11px;font-weight:500;color:#111">${p.m}</div></div><span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;background:${p.bg};color:${p.c}">${p.s}</span></div>`).join('')}
+    </div>
+    <div id="rptab-regua" class="tab-body" style="display:none">
+      <div class="sec-lbl">Régua de cobrança ativa</div>
+      <div class="regua-step"><div class="regua-dot" style="background:#B45309"></div><div><div style="font-size:11px;font-weight:600;color:#111">D+5 · WhatsApp automático</div><div style="font-size:10px;color:#94A3B8;margin-top:2px">${u.dias>5?'✓ Enviado':'Pendente'}</div></div></div>
+      <div class="regua-step"><div class="regua-dot" style="background:#DC2626"></div><div><div style="font-size:11px;font-weight:600;color:#111">D+15 · E-mail + boleto</div><div style="font-size:10px;color:#94A3B8;margin-top:2px">${u.dias>15?'✓ Enviado':'Pendente'}</div></div></div>
+      <div class="regua-step"><div class="regua-dot" style="background:#991B1B"></div><div><div style="font-size:11px;font-weight:600;color:#111">D+30 · Notificação formal</div><div style="font-size:10px;color:#94A3B8;margin-top:2px">${u.dias>30?'✓ Enviado':'Pendente'}</div></div></div>
+      <div class="regua-step"><div class="regua-dot" style="background:#7F1D1D"></div><div><div style="font-size:11px;font-weight:600;color:#111">D+60 · Assembleia / jurídico</div><div style="font-size:10px;color:#94A3B8;margin-top:2px">${u.dias>60?'⚠ Acionar':'Pendente'}</div></div></div>
+    </div>
+    <div id="rptab-docs" class="tab-body" style="display:none">
+      <div class="sec-lbl">Documentos gerados</div>
+      ${u.dias>30?`<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #F7F7F7;align-items:center"><div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#DC2626" stroke-width="1.5"><path d="M4 2h8l4 4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg></div><div><div style="font-size:11px;font-weight:500;color:#111">Notificação formal</div><div style="font-size:10px;color:#94A3B8">Gerada em 13/03/2026</div></div></div>`:''}
+      <div style="border:1.5px dashed #E2E8F0;border-radius:8px;padding:16px;text-align:center;margin-top:8px;cursor:pointer"><div style="font-size:11px;font-weight:500;color:#374151">Gerar novo documento</div><div style="font-size:10px;color:#94A3B8;margin-top:2px">Notificação, acordo, recibo</div></div>
+    </div>`;
+}
+
+function showRpTab(id,el){
+  document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('on'));
+  if(el)el.classList.add('on');
+  ['hist','regua','docs'].forEach(t=>{const e=document.getElementById('rptab-'+t);if(e)e.style.display=t===id?'block':'none';});
+}
+
+function setView(v,el){
+  currentView=v;
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const ma=document.getElementById('main-area');
+  if(v==='planta'){ma.style.padding='20px';ma.style.background='#F8FAFC';renderPlanta();}
+  else{ma.style.padding='0';ma.style.background='#fff';renderLista();}
+}
+
+function filterIns(f,el){
+  activeFilter=f;
+  document.querySelectorAll('.ins').forEach(i=>{i.classList.remove('active');i.style.boxShadow='';});
+  el.classList.add('active');el.style.boxShadow='0 0 0 2px #111';
+  filteredUnits=units.filter(u=>{
+    if(f==='all')return true;
+    if(f==='30')return u.dias<=30;
+    if(f==='60')return u.dias>30&&u.dias<=60;
+    if(f==='90')return u.dias>60;
+    return true;
+  });
+  if(currentView==='planta')renderPlanta();else renderLista();
+}
+
+function searchUnits(q){
+  q=q.toLowerCase();
+  filteredUnits=units.filter(u=>!q||u.name.toLowerCase().includes(q)||u.num.includes(q));
+  if(currentView==='planta')renderPlanta();else renderLista();
+}
+
+function sortUnits(v){
+  if(v==='dias')filteredUnits.sort((a,b)=>b.dias-a.dias);
+  else if(v==='valor')filteredUnits.sort((a,b)=>b.total-a.total);
+  else filteredUnits.sort((a,b)=>a.name.localeCompare(b.name));
+  if(currentView==='lista')renderLista();
+}
+
+const modals={
+  'notif-single':{title:'Enviar notificação',sub:'Escolha o canal e a mensagem a enviar ao morador',body:`
+    <div class="mf"><label class="ml">Canal</label><div class="notif-opts">
+      <div class="notif-opt on" onclick="setNotif(this)">WhatsApp</div>
+      <div class="notif-opt" onclick="setNotif(this)">E-mail</div>
+      <div class="notif-opt" onclick="setNotif(this)">SMS</div>
+    </div></div>
+    <div class="mf"><label class="ml">Mensagem</label>
+      <textarea style="width:100%;border:1px solid #E2E8F0;border-radius:7px;padding:10px 12px;font-size:12px;color:#111;resize:none;outline:none;line-height:1.5" rows="4">Prezado(a), identificamos que a taxa condominial referente ao mês de Abr/2026 encontra-se em aberto. Por favor, regularize o débito até 20/04/2026 para evitar encargos adicionais.</textarea>
+    </div>
+    <div class="mf"><label class="ml">Incluir boleto atualizado?</label>
+      <div class="notif-opts"><div class="notif-opt on" onclick="setNotif(this)">Sim</div><div class="notif-opt" onclick="setNotif(this)">Não</div></div>
+    </div>`,confirm:'Enviar notificação'},
+  'notif-all':{title:'Notificar todos os inadimplentes',sub:'Envio em lote para 10 unidades com débito em aberto',body:`
+    <div class="mf"><label class="ml">Canal</label><div class="notif-opts">
+      <div class="notif-opt on" onclick="setNotif(this)">WhatsApp</div>
+      <div class="notif-opt" onclick="setNotif(this)">E-mail</div>
+      <div class="notif-opt" onclick="setNotif(this)">Ambos</div>
+    </div></div>
+    <div class="mf"><label class="ml">Filtrar por aging</label><select class="ms"><option>Todos (10 unidades)</option><option>+60 dias (3 unidades)</option><option>31–60 dias (3 unidades)</option><option>1–30 dias (4 unidades)</option></select></div>
+    <div style="background:#FEF9C3;border:1px solid #FCD34D;border-radius:7px;padding:10px 12px;font-size:11px;color:#92400E">10 mensagens serão enviadas. Custo estimado: R$ 2,40 via WhatsApp Business API.</div>`,confirm:'Enviar para todos'},
+  'acordo':{title:'Proposta de acordo',sub:'Gere uma proposta de parcelamento para o morador',body:`
+    <div class="mf"><label class="ml">Débito total</label><input class="mi" value="R$ 3.619,00" readonly style="background:#F8FAFC;color:#64748B"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="mf"><label class="ml">Entrada (%)</label><select class="ms"><option>Sem entrada</option><option>10%</option><option>20%</option><option>30%</option></select></div>
+      <div class="mf"><label class="ml">Parcelas</label><select class="ms"><option>2x</option><option>3x</option><option>6x</option><option>12x</option></select></div>
+    </div>
+    <div class="mf"><label class="ml">Desconto de multa/juros (%)</label><select class="ms"><option>Sem desconto</option><option>50% de desconto</option><option>100% de desconto</option></select></div>
+    <div class="mf"><label class="ml">Vencimento 1ª parcela</label><input class="mi" type="date" value="2026-05-01"></div>
+    <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:7px;padding:10px 12px;font-size:11px;color:#166534">Parcela estimada: <strong>R$ 1.809,50</strong> em 2x sem desconto de encargos.</div>`,confirm:'Gerar acordo →'},
+  'regua':{title:'Régua de cobrança',sub:'Defina as etapas automáticas de notificação',body:`
+    <div class="regua-step" style="padding:10px;background:#F8FAFC;border-radius:7px;margin-bottom:8px">
+      <div class="regua-dot" style="background:#B45309;margin-top:4px"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:#111">Etapa 1</span><span style="font-size:10px;color:#94A3B8">D+5</span></div>
+        <input class="mi" value="WhatsApp amigável" style="margin-bottom:6px">
+        <select class="ms"><option>WhatsApp</option><option>E-mail</option><option>SMS</option></select>
+      </div>
+    </div>
+    <div class="regua-step" style="padding:10px;background:#F8FAFC;border-radius:7px;margin-bottom:8px">
+      <div class="regua-dot" style="background:#DC2626;margin-top:4px"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:#111">Etapa 2</span><span style="font-size:10px;color:#94A3B8">D+15</span></div>
+        <input class="mi" value="E-mail formal + boleto" style="margin-bottom:6px">
+        <select class="ms"><option>E-mail</option><option>WhatsApp</option><option>Ambos</option></select>
+      </div>
+    </div>
+    <div class="regua-step" style="padding:10px;background:#F8FAFC;border-radius:7px;margin-bottom:8px">
+      <div class="regua-dot" style="background:#991B1B;margin-top:4px"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:#111">Etapa 3</span><span style="font-size:10px;color:#94A3B8">D+30</span></div>
+        <input class="mi" value="Notificação formal carta" style="margin-bottom:6px">
+        <select class="ms"><option>Carta registrada</option><option>E-mail</option></select>
+      </div>
+    </div>`,confirm:'Salvar régua'},
+};
+
+function showModal(type){
+  const m=modals[type];if(!m)return;
+  document.getElementById('modal-box').innerHTML=`
+    <div class="modal-title">${m.title}</div>
+    <div class="modal-sub">${m.sub}</div>
+    ${m.body}
+    <div class="modal-footer">
+      <button class="btn" onclick="hideModal()">Cancelar</button>
+      <button class="btn dark" onclick="hideModal()">${m.confirm}</button>
+    </div>`;
+  document.getElementById('modal-area').style.display='block';
+}
+function hideModal(){document.getElementById('modal-area').style.display='none';}
+function setNotif(el){const p=el.parentElement;p.querySelectorAll('.notif-opt').forEach(x=>x.classList.remove('on'));el.classList.add('on');}
+
+renderPlanta();
+</script>
