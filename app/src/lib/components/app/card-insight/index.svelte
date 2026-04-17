@@ -67,15 +67,6 @@
 		return 'text-[#8B5CF6]';
 	}
 
-	function getIcon(tone: InsightTone) {
-		if (tone === 'danger') return CircleAlertIcon;
-		if (tone === 'neutral') return Clock3Icon;
-		if (tone === 'success') return CircleCheckIcon;
-		if (tone === 'info') return Building2Icon;
-		return BadgePercentIcon;
-	}
-
-	const Icon = $derived(getIcon(tone));
 </script>
 
 <article
@@ -86,7 +77,17 @@
 		id={`card-insight-icon-container-${id}`}
 		class={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${getIconContainerClasses(tone)}`}
 	>
-		<Icon id={`card-insight-icon-${id}`} class="size-4" />
+		{#if tone === 'danger'}
+			<CircleAlertIcon id={`card-insight-icon-${id}`} class="size-4" />
+		{:else if tone === 'neutral'}
+			<Clock3Icon id={`card-insight-icon-${id}`} class="size-4" />
+		{:else if tone === 'success'}
+			<CircleCheckIcon id={`card-insight-icon-${id}`} class="size-4" />
+		{:else if tone === 'info'}
+			<Building2Icon id={`card-insight-icon-${id}`} class="size-4" />
+		{:else}
+			<BadgePercentIcon id={`card-insight-icon-${id}`} class="size-4" />
+		{/if}
 	</div>
 
 	<div id={`card-insight-content-${id}`} class="flex min-w-0 flex-col">
