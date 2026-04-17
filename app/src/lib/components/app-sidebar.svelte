@@ -1,11 +1,14 @@
 <script lang="ts" module>
 	import BadgeDollarSignIcon from "@lucide/svelte/icons/badge-dollar-sign";
+	import BlocksIcon from "@lucide/svelte/icons/blocks";
 	import Building2Icon from "@lucide/svelte/icons/building-2";
 	import BuildingIcon from "@lucide/svelte/icons/building";
 	import ChartColumnIcon from "@lucide/svelte/icons/chart-column";
+	import DoorOpenIcon from "@lucide/svelte/icons/door-open";
 	import FolderOpenIcon from "@lucide/svelte/icons/folder-open";
 	import LandmarkIcon from "@lucide/svelte/icons/landmark";
 	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
+	import MapIcon from "@lucide/svelte/icons/map";
 	import MegaphoneIcon from "@lucide/svelte/icons/megaphone";
 	import PaletteIcon from "@lucide/svelte/icons/palette";
 	import PlugIcon from "@lucide/svelte/icons/plug";
@@ -43,6 +46,23 @@
 				title: "Estrutura",
 				url: "#",
 				icon: Building2Icon,
+				items: [
+					{
+						title: "Grupos",
+						url: "#",
+						icon: BlocksIcon,
+					},
+					{
+						title: "Unidades",
+						url: "#",
+						icon: DoorOpenIcon,
+					},
+					{
+						title: "Áreas comuns",
+						url: "#",
+						icon: MapIcon,
+					},
+				],
 			},
 			{
 				title: "Moradores",
