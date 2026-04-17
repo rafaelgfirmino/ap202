@@ -80,7 +80,7 @@
 
 <article
 	id={`card-insight-item-${id}`}
-	class={`inline-flex h-[50px] w-[226px] items-center gap-2 rounded-md border px-3 py-2 ${getToneClasses(tone)}`}
+	class={`flex h-auto min-h-[50px] w-full min-w-0 items-center gap-2 rounded-md border px-3 py-2 ${getToneClasses(tone)}`}
 >
 	<div
 		id={`card-insight-icon-container-${id}`}
@@ -92,7 +92,7 @@
 	<div id={`card-insight-content-${id}`} class="flex min-w-0 flex-col">
 		<h3
 			id={`card-insight-title-${id}`}
-			class="truncate text-[12px] leading-none font-semibold py-2"
+			class="truncate py-1 text-[12px] leading-none font-semibold"
 		>
 			{title}
 		</h3>

@@ -106,10 +106,12 @@
 	);
 </script>
 
-<section id="block-map-root" class="flex flex-col gap-4">
+<section id="block-map-root" class="flex w-full flex-col gap-3">
+	<h2 id="block-map-title" class="text-sm font-semibold text-foreground">{blockName}</h2>
+	<div id="block-map-scroll" class="w-full overflow-x-auto pb-2">
 	<div
 		id="block-map-grid"
-		class="grid gap-1.5"
+		class="grid w-max min-w-full gap-1.5"
 		style={`grid-template-columns: ${floorLabelWidth}px repeat(${columns}, ${unitWidth}px); grid-template-rows: repeat(${totalFloors}, ${unitHeight}px);`}
 	>
 		{#each floors as floor}
@@ -179,5 +181,6 @@
 				/>
 			</div>
 		{/each}
+	</div>
 	</div>
 </section>

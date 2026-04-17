@@ -68,6 +68,7 @@
 		style={`min-width: ${w}px; max-width: ${w}px; min-height: ${h}px; max-height: ${h}px;`}
 		onmouseenter={() => (open = true)}
 		onmouseleave={() => (open = false)}
+		onclick={() => (open = !open)}
 		onfocus={() => (open = true)}
 		onblur={() => (open = false)}
 	>
@@ -77,13 +78,13 @@
 		>
 			<span
 				id={`unit-card-number-${apartmentNumber}`}
-				class="w-full text-center text-sm font-semibold leading-none"
+				class="w-full text-center text-[12px] font-semibold leading-none sm:text-sm"
 			>
 				{apartmentNumber}
 			</span>
 			<span
 				id={`unit-card-user-name-${apartmentNumber}`}
-				class="w-full truncate text-center text-[12px] leading-tight"
+				class="w-full truncate text-center text-[10px] leading-tight sm:text-[12px]"
 			>
 				{residentName}
 			</span>
@@ -95,7 +96,7 @@
 		side="top"
 		align="center"
 		sideOffset={10}
-		class="w-[220px] gap-0 border-0 bg-[#171717] p-0 text-white shadow-none ring-0"
+		class="w-[220px] max-w-[calc(100vw-2rem)] gap-0 border-0 bg-[#171717] p-0 text-white shadow-none ring-0"
 		onmouseenter={() => (open = true)}
 		onmouseleave={() => (open = false)}
 	>
