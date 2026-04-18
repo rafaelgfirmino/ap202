@@ -29,26 +29,26 @@
 			id: 'current-balance',
 			label: 'Saldo atual',
 			value: 'R$ 184.300',
-			description: 'Caixa consolidado das contas do condomínio',
+			description: 'Caixa consolidado das contas do condominio',
 			toneClass: 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]'
 		},
 		{
 			id: 'received-month',
-			label: 'Recebido no mês',
+			label: 'Recebido no mes',
 			value: 'R$ 52.880',
 			description: '78% da receita prevista para abril',
 			toneClass: 'border-[#86EFAC] bg-[#F0FDF4] text-[#15803D]'
 		},
 		{
 			id: 'paid-month',
-			label: 'Pago no mês',
+			label: 'Pago no mes',
 			value: 'R$ 31.420',
 			description: 'Despesas operacionais e contratos recorrentes',
 			toneClass: 'border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]'
 		},
 		{
 			id: 'total-overdue',
-			label: 'Inadimplência total',
+			label: 'Inadimplencia total',
 			value: 'R$ 18.640',
 			description: '10 unidades em atraso em 2 blocos',
 			toneClass: 'border-[#FECACA] bg-[#FFF5F5] text-[#DC2626]'
@@ -73,19 +73,19 @@
 	const insights = [
 		{
 			id: 'insight-overdue-growth',
-			title: 'Inadimplência em alta',
-			description: 'A inadimplência subiu 12% em relação ao mês passado.',
+			title: 'Inadimplencia em alta',
+			description: 'A inadimplencia subiu 12% em relacao ao mes passado.',
 			toneClass: 'border-[#FECACA] bg-[#FFF5F5] text-[#DC2626]'
 		},
 		{
 			id: 'insight-block-risk',
-			title: 'Bloco crítico',
-			description: 'Bloco B concentra a maior dívida do condomínio.',
+			title: 'Bloco critico',
+			description: 'Bloco B concentra a maior divida do condominio.',
 			toneClass: 'border-[#CBD5E1] bg-[#F8FAFC] text-[#475569]'
 		},
 		{
 			id: 'insight-concentration',
-			title: 'Ação imediata',
+			title: 'Acao imediata',
 			description: '3 unidades representam 40% do total em atraso.',
 			toneClass: 'border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]'
 		}
@@ -95,7 +95,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard do Condomínio</title>
+	<title>Dashboard do Condominio</title>
 </svelte:head>
 
 <main id="dashboard-page-root" class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6">
@@ -105,8 +105,8 @@
 				Dashboard do condominio
 			</h1>
 			<p id="dashboard-subtitle" class="max-w-3xl text-sm text-muted-foreground">
-				Acompanhe caixa, inadimplência e os principais pontos de atenção do condomínio em uma
-				visão única.
+				Acompanhe caixa, inadimplencia e os principais pontos de atencao do condominio em uma
+				visao unica.
 			</p>
 		</div>
 	</section>
@@ -144,9 +144,9 @@
 	<section id="dashboard-charts" class="grid grid-cols-1 gap-4 xl:grid-cols-2">
 		<section id="dashboard-overdue-chart-card" class="rounded-xl border bg-card">
 			<div id="dashboard-overdue-chart-header" class="space-y-1 border-b px-6 py-5">
-				<h2 id="dashboard-overdue-chart-title" class="text-base font-semibold text-foreground">Inadimplência por mês</h2>
+				<h2 id="dashboard-overdue-chart-title" class="text-base font-semibold text-foreground">Inadimplencia por mes</h2>
 				<p id="dashboard-overdue-chart-description" class="text-sm text-muted-foreground">
-					Evolução do valor em atraso nos últimos 6 meses
+					Evolucao do valor em atraso nos ultimos 6 meses
 				</p>
 			</div>
 			<div id="dashboard-overdue-chart-content" class="px-6 py-5">
@@ -194,9 +194,9 @@
 
 		<section id="dashboard-expected-chart-card" class="rounded-xl border bg-card">
 			<div id="dashboard-expected-chart-header" class="space-y-1 border-b px-6 py-5">
-				<h2 id="dashboard-expected-chart-title" class="text-base font-semibold text-foreground">Recebido x previsto no mês</h2>
+				<h2 id="dashboard-expected-chart-title" class="text-base font-semibold text-foreground">Recebido x previsto no mes</h2>
 				<p id="dashboard-expected-chart-description" class="text-sm text-muted-foreground">
-					Comparativo entre arrecadação prevista e recebida por bloco
+					Comparativo entre arrecadacao prevista e recebida por bloco
 				</p>
 			</div>
 			<div id="dashboard-expected-chart-content" class="space-y-4 px-6 py-5">
@@ -241,7 +241,7 @@
 				Indicadores inteligentes
 			</h2>
 			<p id="dashboard-insights-subtitle" class="text-sm text-muted-foreground">
-				Leituras automáticas para destacar onde está o problema e o que precisa de ação agora.
+				Leituras automaticas para destacar onde esta o problema e o que precisa de acao agora.
 			</p>
 		</div>
 

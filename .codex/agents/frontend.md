@@ -1,0 +1,150 @@
+# Agent Instructions — app/
+
+## Stack
+- **Framework:** SvelteKit
+- **Linguagem:** TypeScript (strict mode)
+- **Estilização:** Tailwind CSS + shadcn-svelte
+- **Componentes UI:** shadcn-svelte
+
+---
+
+## Regras Absolutas de Estilização
+
+> ⚠️ Estas regras nunca devem ser quebradas, independente do contexto ou pedido.
+
+- **NUNCA escreva CSS customizado.** Nem inline styles, nem arquivos `.css`, nem blocos `<style>` em componentes.
+- Toda estilização deve usar **classes Tailwind** ou **componentes shadcn-svelte**.
+- O arquivo `layout.css` é **intocável** — nunca leia, edite ou referencie este arquivo.
+- Não crie arquivos `.css`, `.scss`, `.sass` ou qualquer variante.
+- Não use a diretiva `style=` em elementos HTML.
+- **NUNCA FAÇA NADA NO BACKEND**
+
+---
+
+## Estrutura de Componentes
+
+- Todos os componentes customizados devem ser criados em **`components/app/`**.
+- Componentes reutilizáveis de UI base ficam em `components/ui/` (gerenciados pelo shadcn-svelte — não edite manualmente).
+- Nomeie arquivos de componentes em **PascalCase**: `UserCard.svelte`, `ProductList.svelte`.
+- Um componente por arquivo.
+
+---
+
+## Padrões TypeScript
+
+- Sempre use tipagem explícita — evite `any`.
+- Prefira `interface` para tipos de objetos e `type` para unions e intersections.
+- Exports de tipos devem usar `export type`.
+- Props de componentes Svelte devem ser tipadas com `interface Props`.
+
+```typescript
+// ✅ Correto
+interface Props {
+  title: string;
+  count: number;
+  onClose?: () => void;
+}
+
+// ❌ Evitar
+let props: any;
+```
+
+---
+
+## Padrões Svelte
+
+- Use a sintaxe moderna do Svelte 5 com **runes** (`$state`, `$derived`, `$effect`, `$props`) quando disponível.
+- Prefira `$derived` a `$effect` para valores computados.
+- Evite lógica complexa dentro do template — extraia para variáveis derivadas ou funções.
+- Use `{#snippet}` para partes reutilizáveis dentro de um mesmo componente.
+
+---
+
+## Uso do shadcn-svelte
+
+- Sempre prefira um componente shadcn-svelte antes de criar um customizado.
+- Para adicionar novos componentes: `npx shadcn-svelte@latest add <componente>`.
+- Customize componentes shadcn via **props e classes Tailwind**, nunca editando os arquivos gerados em `components/ui/`.
+- Consulte a documentação em [shadcn-svelte.com](https://www.shadcn-svelte.com) para a API de cada componente.
+
+---
+
+## Tailwind
+
+- Siga a ordem de classes: layout → box model → tipografia → visual → interatividade.
+- Use variantes do Tailwind para responsividade: `sm:`, `md:`, `lg:`.
+- Prefira tokens do design system (cores, espaçamentos) a valores arbitrários `[...]`.
+- Para classes condicionais, use a lib `clsx` ou `cn` (utilitário do shadcn).
+
+```svelte
+<!-- ✅ Correto -->
+<div class={cn("flex items-center gap-2", isActive && "text-primary")}>
+
+<!-- ❌ Evitar -->
+<div style="display: flex; gap: 8px;">
+```
+
+---
+
+## Acessibilidade
+
+- Todo `<img>` deve ter `alt` descritivo.
+- Elementos interativos devem ser focáveis via teclado.
+- Use elementos semânticos HTML (`<button>`, `<nav>`, `<main>`, `<section>`).
+- Ícones decorativos devem ter `aria-hidden="true"`.
+
+---
+
+## Atributos HTML Obrigatórios
+
+> ⚠️ Regra absoluta — todo elemento HTML deve ter ambos os atributos.
+
+- Todo elemento HTML **deve ter `id`** único e descritivo.
+- Todo elemento HTML **deve ter `data-test`** para uso em testes automatizados.
+- O valor de `data-test` deve descrever o papel do elemento, em kebab-case.
+
+```svelte
+<!-- ✅ Correto -->
+<button id="submit-login" data-test="submit-login">Entrar</button>
+<input id="email-input" data-test="email-input" type="email" />
+<div id="user-card-container" data-test="user-card-container">...</div>
+
+<!-- ❌ Proibido -->
+<button>Entrar</button>
+<input type="email" />
+```
+
+---
+
+## Comunicação com o Backend
+
+- Toda comunicação com APIs e serviços externos deve estar **exclusivamente em `app/services/`**.
+- Nunca faça chamadas `fetch` ou use clientes HTTP diretamente em componentes `.svelte`.
+- Cada arquivo de service é responsável por um domínio: `userService.ts`, `productService.ts`.
+- Os services devem exportar funções tipadas com retorno explícito.
+
+```typescript
+// ✅ app/services/userService.ts
+export async function getUser(id: string): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  return response.json();
+}
+
+// ❌ Proibido — fetch dentro de componente
+// UserCard.svelte
+const user = await fetch('/api/users/1');
+```
+
+---
+
+## O que nunca fazer
+
+| ❌ Proibido | ✅ Alternativa |
+|---|---|
+| Criar arquivo `.css` | Classes Tailwind |
+| Bloco `<style>` no componente | Classes Tailwind |
+| Editar `layout.css` | Nunca tocar |
+| Editar arquivos em `components/ui/` | Props + classes Tailwind |
+| Componente fora de `components/app/` | Criar em `components/app/` |
+| Usar `any` no TypeScript | Tipar corretamente |
+| `style=` inline | Classes Tailwind |
