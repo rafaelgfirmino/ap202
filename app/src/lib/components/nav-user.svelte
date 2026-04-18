@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import * as Avatar from "$lib/components/ui/avatar/index.js";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+	import { logout } from "$lib/services/auth.js";
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import { useSidebar } from "$lib/components/ui/sidebar/index.js";
 	import BadgeCheckIcon from "@lucide/svelte/icons/badge-check";
@@ -12,6 +14,11 @@
 
 	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
 	const sidebar = useSidebar();
+
+	async function handleLogout(): Promise<void> {
+		await logout();
+		await goto("/security/login");
+	}
 </script>
 
 <Sidebar.Menu>
@@ -77,7 +84,11 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item
+					id="nav-user-logout"
+					data-test="nav-user-logout"
+					onclick={handleLogout}
+				>
 					<LogOutIcon />
 					Log out
 				</DropdownMenu.Item>

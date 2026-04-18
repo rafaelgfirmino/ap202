@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Logo from '$lib/components/app/logo/index.svelte';
+	import { getInitialRoute } from '$lib/services/auth.js';
 	import { getClerk, getClerkErrorMessage, signInWithPassword } from '$lib/services/clerk.js';
 	import Building2Icon from '@lucide/svelte/icons/building-2';
 	import CarFrontIcon from '@lucide/svelte/icons/car-front';
@@ -16,12 +17,16 @@
 	let errorMessage = $state('');
 	let isLoading = $state(false);
 
+	async function redirectToInitialPage(): Promise<void> {
+		await goto(await getInitialRoute());
+	}
+
 	onMount(async () => {
 		try {
 			const clerk = await getClerk();
 
 			if (clerk.isSignedIn) {
-				await goto('/');
+				await redirectToInitialPage();
 			}
 		} catch (error) {
 			errorMessage = getClerkErrorMessage(error);
@@ -34,10 +39,24 @@
 		isLoading = true;
 
 		try {
+			const clerk = await getClerk();
+
+			if (clerk.isSignedIn) {
+				await redirectToInitialPage();
+				return;
+			}
+
 			await signInWithPassword({ email, password });
-			await goto('/');
+			await redirectToInitialPage();
 		} catch (error) {
-			errorMessage = getClerkErrorMessage(error);
+			const message = getClerkErrorMessage(error);
+
+			if (message === "You're already signed in.") {
+				await redirectToInitialPage();
+				return;
+			}
+
+			errorMessage = message;
 		} finally {
 			isLoading = false;
 		}

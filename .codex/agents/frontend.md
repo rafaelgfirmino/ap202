@@ -148,3 +148,8 @@ const user = await fetch('/api/users/1');
 | Componente fora de `components/app/` | Criar em `components/app/` |
 | Usar `any` no TypeScript | Tipar corretamente |
 | `style=` inline | Classes Tailwind |
+
+
+## O que sempre fazer 
+- Validar o texto escrito
+- Validar acentos

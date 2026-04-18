@@ -1,14 +1,53 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
+	import { getClerkErrorMessage } from '$lib/services/clerk.js';
+	import { getAuthenticatedUser, isAuthenticated, type AuthenticatedUser } from '$lib/services/auth.js';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 
 	let { children } = $props();
+	let user = $state<AuthenticatedUser | null>(null);
+	let isLoadingSession = $state(true);
+
+	onMount(async () => {
+		try {
+			const authenticated = await isAuthenticated();
+
+			if (!authenticated) {
+				await goto('/security/login');
+				return;
+			}
+
+			user = await getAuthenticatedUser();
+		} catch (error) {
+			console.error(getClerkErrorMessage(error));
+			await goto('/security/login');
+		} finally {
+			isLoadingSession = false;
+		}
+	});
 </script>
 
 <Sidebar.Provider>
-	<AppSidebar />
+	{#if isLoadingSession}
+		<div
+			id="private-layout-loading"
+			data-test="private-layout-loading"
+			class="flex min-h-screen w-full items-center justify-center"
+		>
+			<div
+				id="private-layout-loading-label"
+				data-test="private-layout-loading-label"
+				class="text-sm text-muted-foreground"
+			>
+				Carregando sessao...
+			</div>
+		</div>
+	{:else if user}
+		<AppSidebar user={{ name: user.name, email: user.email, avatar: '' }} />
 	<Sidebar.Inset>
 		<header
 			id="private-layout-header"
@@ -68,4 +107,5 @@
 			</div>
 		</div>
 	</Sidebar.Inset>
+	{/if}
 </Sidebar.Provider>

@@ -5,6 +5,27 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	server: {
+		proxy: {
+			'/api': {
+				target: 'http://localhost:8080',
+				changeOrigin: true
+			},
+			'/condominiums': {
+				target: 'http://localhost:8080',
+				changeOrigin: true
+			},
+			'/health': {
+				target: 'http://localhost:8080',
+				changeOrigin: true
+			},
+			'/websocket': {
+				target: 'http://localhost:8080',
+				changeOrigin: true,
+				ws: true
+			}
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

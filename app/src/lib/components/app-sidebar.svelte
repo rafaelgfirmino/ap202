@@ -1,4 +1,6 @@
-<script lang="ts" module>
+<script lang="ts">
+	import { page } from "$app/state";
+	import type { AuthenticatedUser } from "$lib/services/auth.js";
 	import BadgeDollarSignIcon from "@lucide/svelte/icons/badge-dollar-sign";
 	import BlocksIcon from "@lucide/svelte/icons/blocks";
 	import Building2Icon from "@lucide/svelte/icons/building-2";
@@ -17,6 +19,10 @@
 	import UserCogIcon from "@lucide/svelte/icons/user-cog";
 	import UsersIcon from "@lucide/svelte/icons/users";
 	import WrenchIcon from "@lucide/svelte/icons/wrench";
+	import NavMain from "./nav-main.svelte";
+	import NavUser from "./nav-user.svelte";
+	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import type { ComponentProps } from "svelte";
 
 	type NavItem = {
 		title: string;
@@ -28,133 +34,131 @@
 		items?: NavItem[];
 	};
 
-	const data = {
-		user: {
-			name: "shadcn",
-			email: "m@example.com",
-			avatar: "",
-		},
-		teams: [],
-		navMain: [
-			{
-				title: "Dashboard",
-				url: "#",
-				icon: LayoutDashboardIcon,
-				isActive: true,
-			},
-			{
-				title: "Estrutura",
-				url: "#",
-				icon: Building2Icon,
-				items: [
-					{
-						title: "Grupos",
-						url: "#",
-						icon: BlocksIcon,
-					},
-					{
-						title: "Unidades",
-						url: "#",
-						icon: DoorOpenIcon,
-					},
-					{
-						title: "Áreas comuns",
-						url: "#",
-						icon: MapIcon,
-					},
-				],
-			},
-			{
-				title: "Moradores",
-				url: "#",
-				icon: UsersIcon,
-			},
-			{
-				title: "Financeiro",
-				url: "#",
-				icon: LandmarkIcon,
-			},
-			{
-				title: "Balancetes",
-				url: "#",
-				icon: ChartColumnIcon,
-			},
-			{
-				title: "Comunicados",
-				url: "#",
-				icon: MegaphoneIcon,
-			},
-			{
-				title: "Chamados",
-				url: "#",
-				icon: WrenchIcon,
-			},
-			{
-				title: "Documentos",
-				url: "#",
-				icon: FolderOpenIcon,
-			},
-			{
-				title: "Usuários",
-				url: "#",
-				icon: ShieldCheckIcon,
-			},
-			{
-				title: "Configurações",
-				url: "#",
-				icon: SettingsIcon,
-				isActive: true,
-				items: [
-					{
-						title: "Geral",
-						url: "#",
-						icon: BuildingIcon,
-					},
-					{
-						title: "Cobrança",
-						url: "#",
-						icon: BadgeDollarSignIcon,
-					},
-					{
-						title: "Usuários",
-						url: "#",
-						icon: UserCogIcon,
-					},
-					{
-						title: "Integrações",
-						url: "#",
-						icon: PlugIcon,
-					},
-					{
-						title: "Personalização",
-						url: "#",
-						icon: PaletteIcon,
-					},
-				],
-			},
-		] satisfies NavItem[],
-	};
-</script>
-
-<script lang="ts">
-	import NavMain from "./nav-main.svelte";
-	import NavUser from "./nav-user.svelte";
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-	import type { ComponentProps } from "svelte";
-
 	let {
 		ref = $bindable(null),
 		collapsible = "icon",
+		user = {
+			name: "Usuario",
+			email: "",
+			avatar: "",
+		},
 		...restProps
-	}: ComponentProps<typeof Sidebar.Root> = $props();
+	}: ComponentProps<typeof Sidebar.Root> & {
+		user?: Pick<AuthenticatedUser, "name" | "email"> & { avatar?: string };
+	} = $props();
+
+	const condominiumCode = $derived(page.params.code ?? "");
+	const dashboardUrl = $derived(condominiumCode ? `/g/${condominiumCode}` : "/");
+	const groupsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/grupos` : "#");
+	const unitsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/unidades` : "#");
+
+	const navMain = $derived([
+		{
+			title: "Dashboard",
+			url: dashboardUrl,
+			icon: LayoutDashboardIcon,
+			isActive: page.url.pathname === dashboardUrl,
+		},
+		{
+			title: "Estrutura",
+			url: "#",
+			icon: Building2Icon,
+			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/` : "/g/"),
+			items: [
+				{
+					title: "Grupos",
+					url: groupsUrl,
+					icon: BlocksIcon,
+				},
+				{
+					title: "Unidades",
+					url: unitsUrl,
+					icon: DoorOpenIcon,
+				},
+				{
+					title: "Áreas comuns",
+					url: "#",
+					icon: MapIcon,
+				},
+			],
+		},
+		{
+			title: "Moradores",
+			url: "#",
+			icon: UsersIcon,
+		},
+		{
+			title: "Financeiro",
+			url: "#",
+			icon: LandmarkIcon,
+		},
+		{
+			title: "Balancetes",
+			url: "#",
+			icon: ChartColumnIcon,
+		},
+		{
+			title: "Comunicados",
+			url: "#",
+			icon: MegaphoneIcon,
+		},
+		{
+			title: "Chamados",
+			url: "#",
+			icon: WrenchIcon,
+		},
+		{
+			title: "Documentos",
+			url: "#",
+			icon: FolderOpenIcon,
+		},
+		{
+			title: "Usuários",
+			url: "#",
+			icon: ShieldCheckIcon,
+		},
+		{
+			title: "Configurações",
+			url: "#",
+			icon: SettingsIcon,
+			isActive: true,
+			items: [
+				{
+					title: "Geral",
+					url: "#",
+					icon: BuildingIcon,
+				},
+				{
+					title: "Cobrança",
+					url: "#",
+					icon: BadgeDollarSignIcon,
+				},
+				{
+					title: "Usuários",
+					url: "#",
+					icon: UserCogIcon,
+				},
+				{
+					title: "Integrações",
+					url: "#",
+					icon: PlugIcon,
+				},
+				{
+					title: "Personalização",
+					url: "#",
+					icon: PaletteIcon,
+				},
+			],
+		},
+	] satisfies NavItem[]);
 </script>
 
 <Sidebar.Root bind:ref {collapsible} {...restProps}>
 	<Sidebar.Content>
-		<NavMain items={data.navMain} />
+		<NavMain items={navMain} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={data.user} />
+		<NavUser user={{ ...user, avatar: user.avatar ?? "" }} />
 	</Sidebar.Footer>
 	<Sidebar.Rail />
 </Sidebar.Root>
