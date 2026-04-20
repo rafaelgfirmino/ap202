@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import FinancialStatusBadge from '$lib/components/app/FinancialStatusBadge.svelte';
 	import * as Command from '$lib/components/ui/command/index.js';
-	import { getUnitsByCondominiumCode } from '$lib/services/unit-search.js';
+	import { getUnitsByCondominiumCode, type UnitSearchItem } from '$lib/services/unit-search.js';
 	import Building2Icon from '@lucide/svelte/icons/building-2';
 	import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
 	import DoorOpenIcon from '@lucide/svelte/icons/door-open';
+	import { onMount } from 'svelte';
 
 	/**
 	 * Command palette global de unidades.
@@ -19,8 +21,9 @@
 
 	let open = $state(false);
 	let searchValue = $state('');
-
-	const units = $derived(getUnitsByCondominiumCode(condominiumCode));
+	let units = $state<UnitSearchItem[]>([]);
+	let isLoading = $state(false);
+	let errorMessage = $state('');
 
 	function handleDocumentKeydown(event: KeyboardEvent) {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') {
@@ -34,6 +37,25 @@
 		searchValue = '';
 		await goto(href);
 	}
+
+	async function loadUnits(): Promise<void> {
+		isLoading = true;
+		errorMessage = '';
+
+		try {
+			units = await getUnitsByCondominiumCode(condominiumCode);
+		} catch (error) {
+			errorMessage =
+				error instanceof Error ? error.message : 'Não foi possível carregar as unidades.';
+			units = [];
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	onMount(async () => {
+		await loadUnits();
+	});
 </script>
 
 <svelte:document onkeydown={handleDocumentKeydown} />
@@ -52,6 +74,24 @@
 	/>
 
 	<Command.List id="unit-search-command-list" class="max-h-[360px]">
+		{#if isLoading}
+			<div
+				id="unit-search-command-loading"
+				data-test="unit-search-command-loading"
+				class="px-4 py-6 text-sm text-muted-foreground"
+			>
+				Carregando unidades...
+			</div>
+		{:else if errorMessage}
+			<div
+				id="unit-search-command-error"
+				data-test="unit-search-command-error"
+				class="px-4 py-6 text-sm text-destructive"
+			>
+				{errorMessage}
+			</div>
+		{/if}
+
 		<Command.Empty id="unit-search-command-empty">
 			Nenhuma unidade encontrada para essa busca.
 		</Command.Empty>
@@ -90,16 +130,10 @@
 									{unit.residentName}
 								</p>
 							</div>
-							<span
-								id={`unit-search-command-item-status-${unit.id}`}
-								class={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium ${
-									unit.status === 'adimplente'
-										? 'bg-emerald-50 text-emerald-700'
-										: 'bg-rose-50 text-rose-700'
-								}`}
-							>
-								{unit.status === 'adimplente' ? 'Em dia' : 'Em atraso'}
-							</span>
+							<FinancialStatusBadge
+								status={unit.status}
+								class="px-1.5 py-0.5 text-[10px] leading-none"
+							/>
 						</div>
 
 						<div

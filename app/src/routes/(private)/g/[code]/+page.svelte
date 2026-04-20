@@ -4,7 +4,7 @@
 		label: string;
 		value: string;
 		description: string;
-		toneClass: string;
+		accentClass: string;
 	};
 
 	type MonthlyOverdue = {
@@ -30,28 +30,28 @@
 			label: 'Saldo atual',
 			value: 'R$ 184.300',
 			description: 'Caixa consolidado das contas do condominio',
-			toneClass: 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]'
+			accentClass: 'bg-slate-900/80'
 		},
 		{
 			id: 'received-month',
 			label: 'Recebido no mes',
 			value: 'R$ 52.880',
 			description: '78% da receita prevista para abril',
-			toneClass: 'border-[#86EFAC] bg-[#F0FDF4] text-[#15803D]'
+			accentClass: 'bg-emerald-600/85'
 		},
 		{
 			id: 'paid-month',
 			label: 'Pago no mes',
 			value: 'R$ 31.420',
 			description: 'Despesas operacionais e contratos recorrentes',
-			toneClass: 'border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]'
+			accentClass: 'bg-sky-600/85'
 		},
 		{
 			id: 'total-overdue',
 			label: 'Inadimplencia total',
 			value: 'R$ 18.640',
 			description: '10 unidades em atraso em 2 blocos',
-			toneClass: 'border-[#FECACA] bg-[#FFF5F5] text-[#DC2626]'
+			accentClass: 'bg-rose-600/85'
 		}
 	];
 
@@ -75,19 +75,19 @@
 			id: 'insight-overdue-growth',
 			title: 'Inadimplencia em alta',
 			description: 'A inadimplencia subiu 12% em relacao ao mes passado.',
-			toneClass: 'border-[#FECACA] bg-[#FFF5F5] text-[#DC2626]'
+			toneClass: 'border-rose-200 bg-rose-50/60 text-rose-700'
 		},
 		{
 			id: 'insight-block-risk',
 			title: 'Bloco critico',
 			description: 'Bloco B concentra a maior divida do condominio.',
-			toneClass: 'border-[#CBD5E1] bg-[#F8FAFC] text-[#475569]'
+			toneClass: 'border-border bg-card text-foreground'
 		},
 		{
 			id: 'insight-concentration',
 			title: 'Acao imediata',
 			description: '3 unidades representam 40% do total em atraso.',
-			toneClass: 'border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]'
+			toneClass: 'border-amber-200 bg-amber-50/60 text-amber-800'
 		}
 	];
 
@@ -115,25 +115,26 @@
 		{#each summaryCards as summary}
 			<article
 				id={`dashboard-summary-card-${summary.id}`}
-				class={`flex min-h-[132px] flex-col justify-between rounded-xl border p-4 ${summary.toneClass}`}
+				class="flex min-h-[132px] flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm"
 			>
-				<div id={`dashboard-summary-card-header-${summary.id}`} class="flex flex-col gap-2">
+				<div id={`dashboard-summary-card-header-${summary.id}`} class="flex flex-col gap-3">
 					<span
 						id={`dashboard-summary-card-label-${summary.id}`}
-						class="text-xs font-medium uppercase tracking-[0.08em] opacity-80"
+						class="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground"
 					>
+						<span class={`h-2 w-2 rounded-full ${summary.accentClass}`}></span>
 						{summary.label}
 					</span>
 					<strong
 						id={`dashboard-summary-card-value-${summary.id}`}
-						class="text-2xl font-semibold leading-none"
+						class="text-2xl font-semibold leading-none text-foreground"
 					>
 						{summary.value}
 					</strong>
 				</div>
 				<p
 					id={`dashboard-summary-card-description-${summary.id}`}
-					class="mt-3 text-sm leading-snug opacity-80"
+					class="mt-3 text-sm leading-snug text-muted-foreground"
 				>
 					{summary.description}
 				</p>
@@ -152,7 +153,7 @@
 			<div id="dashboard-overdue-chart-content" class="px-6 py-5">
 				<div
 					id="dashboard-overdue-chart-bars"
-					class="flex h-[260px] items-end justify-between gap-3 rounded-lg bg-[#FAFAF9] p-4"
+					class="flex h-[260px] items-end justify-between gap-3 rounded-lg border border-border bg-muted/25 p-4"
 				>
 					{#each monthlyOverdueData as item}
 						<div
@@ -165,7 +166,7 @@
 							>
 								<div
 									id={`dashboard-overdue-chart-bar-${item.month}`}
-									class="w-full max-w-12 rounded-t-md bg-[#F87171]"
+									class="w-full max-w-12 rounded-t-md bg-rose-400/85"
 									style={`height: ${(item.value / maxOverdueValue) * 100}%; min-height: 18px;`}
 								></div>
 							</div>
@@ -175,7 +176,7 @@
 							>
 								<span
 									id={`dashboard-overdue-chart-value-${item.month}`}
-									class="text-center text-[11px] font-medium text-[#B91C1C]"
+									class="text-center text-[11px] font-medium text-muted-foreground"
 								>
 									{currencyFormatter.format(item.value)}
 								</span>
@@ -221,11 +222,11 @@
 						</div>
 						<div
 							id={`dashboard-expected-chart-track-${item.label}`}
-							class="h-3 w-full overflow-hidden rounded-full bg-[#E7E5E4]"
+							class="h-3 w-full overflow-hidden rounded-full bg-muted"
 						>
 							<div
 								id={`dashboard-expected-chart-progress-${item.label}`}
-								class="h-full rounded-full bg-[#2563EB]"
+								class="h-full rounded-full bg-slate-700"
 								style={`width: ${(item.received / item.expected) * 100}%;`}
 							></div>
 						</div>

@@ -51,6 +51,7 @@
 	const dashboardUrl = $derived(condominiumCode ? `/g/${condominiumCode}` : "/");
 	const groupsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/grupos` : "#");
 	const unitsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/unidades` : "#");
+	const residentsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/moradores` : "#");
 
 	const navMain = $derived([
 		{
@@ -84,8 +85,9 @@
 		},
 		{
 			title: "Moradores",
-			url: "#",
+			url: residentsUrl,
 			icon: UsersIcon,
+			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/moradores` : "/moradores"),
 		},
 		{
 			title: "Financeiro",

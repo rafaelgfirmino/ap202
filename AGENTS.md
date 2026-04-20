@@ -1,6 +1,6 @@
 Agentes Especializados
 Para tarefas relacionadas ao frontend (componentes, UI, estilização, services), use o agente especializado:
-@.claude/agents/frontend.md
+`.codex/agents/frontend.md`
 
 Estrutura do Projeto
 app/ — Frontend (SvelteKit + TypeScript + Tailwind + shadcn-svelte)

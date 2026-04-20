@@ -54,6 +54,7 @@
 		"vitest-browser-svelte": "^2.1.0"
 	},
 	"dependencies": {
-		"@clerk/clerk-js": "^6.7.2"
+		"@clerk/clerk-js": "^6.7.2",
+		"@tanstack/table-core": "^8.21.3"
 	}
 }
