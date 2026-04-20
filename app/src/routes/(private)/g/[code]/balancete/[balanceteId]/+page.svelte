@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+	import ChevronsLeftIcon from '@lucide/svelte/icons/chevrons-left';
+	import ChevronsRightIcon from '@lucide/svelte/icons/chevrons-right';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import LockIcon from '@lucide/svelte/icons/lock';
 	import LockOpenIcon from '@lucide/svelte/icons/lock-open';
 	import Pencil2Icon from '@lucide/svelte/icons/pencil';
 	import PlusIcon from '@lucide/svelte/icons/plus';
+	import SearchIcon from '@lucide/svelte/icons/search';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import TrendingDownIcon from '@lucide/svelte/icons/trending-down';
 	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
@@ -48,6 +53,10 @@
 	let isActing = $state(false);
 	let deletingId = $state<number | null>(null);
 	let errorMessage = $state('');
+	let rateioBlockFilter = $state('all');
+	let rateioUnitFilter = $state('');
+	let rateioPageSize = $state(20);
+	let rateioCurrentPage = $state(1);
 
 	let showCloseDialog = $state(false);
 	let closeDueDate = $state('');
@@ -142,10 +151,59 @@
 		rateioRows.length ? Math.max(...rateioRows.map((r) => r.total)) : 0
 	);
 
+	const rateioBlockOptions = $derived.by(() => {
+		const blocks = Array.from(
+			new Set(rateioRows.map((row) => row.unit.group_name ?? 'Sem grupo'))
+		).sort((a, b) => a.localeCompare(b));
+
+		return ['all', ...blocks];
+	});
+
+	const filteredRateioRows = $derived(
+		rateioRows.filter((row) => {
+			const blockName = row.unit.group_name ?? 'Sem grupo';
+			if (rateioBlockFilter !== 'all' && blockName !== rateioBlockFilter) {
+				return false;
+			}
+
+			const normalizedFilter = rateioUnitFilter.trim().toLowerCase();
+
+			if (normalizedFilter.length === 0) {
+				return true;
+			}
+
+			return [
+				row.unit.code,
+				row.unit.identifier,
+				row.unit.group_name ?? '',
+				row.unit.floor ?? ''
+			]
+				.join(' ')
+				.toLowerCase()
+				.includes(normalizedFilter);
+		})
+	);
+
+	const rateioTotalPages = $derived(
+		Math.max(1, Math.ceil(filteredRateioRows.length / rateioPageSize))
+	);
+
+	const pagedRateioRows = $derived(
+		filteredRateioRows.slice(
+			(rateioCurrentPage - 1) * rateioPageSize,
+			rateioCurrentPage * rateioPageSize
+		)
+	);
+
+	const filteredRateioGroupCount = $derived.by(() => {
+		const groupNames = new Set(filteredRateioRows.map((row) => row.unit.group_name ?? 'Sem grupo'));
+		return groupNames.size;
+	});
+
 	// Grouped by block for the rateio tab
 	const rateioGroups = $derived.by(() => {
 		const map = new Map<string, typeof rateioRows>();
-		for (const row of rateioRows) {
+		for (const row of pagedRateioRows) {
 			const key = row.unit.group_name ?? 'Sem grupo';
 			if (!map.has(key)) map.set(key, []);
 			map.get(key)!.push(row);
@@ -207,6 +265,32 @@
 			errorMessage = error instanceof Error ? error.message : 'Não foi possível excluir o lançamento.';
 		} finally { deletingId = null; }
 	}
+
+	$effect(() => {
+		rateioPageSize;
+		rateioCurrentPage = 1;
+	});
+
+	$effect(() => {
+		rateioRows;
+		rateioCurrentPage = 1;
+	});
+
+	$effect(() => {
+		rateioBlockFilter;
+		rateioCurrentPage = 1;
+	});
+
+	$effect(() => {
+		rateioUnitFilter;
+		rateioCurrentPage = 1;
+	});
+
+	$effect(() => {
+		if (rateioCurrentPage > rateioTotalPages) {
+			rateioCurrentPage = rateioTotalPages;
+		}
+	});
 
 	onMount(async () => { await loadData(); });
 </script>
@@ -479,22 +563,80 @@
 							</div>
 							<div class="rounded-lg border bg-background p-3">
 								<div class="text-xs text-muted-foreground">Unidades afetadas</div>
-								<div class="mt-1 text-base font-bold text-foreground">{rateioRows.length}</div>
-								<div class="mt-0.5 text-[10px] text-muted-foreground">{rateioGroups.length} {rateioGroups.length === 1 ? 'grupo' : 'grupos'}</div>
+								<div class="mt-1 text-base font-bold text-foreground">{filteredRateioRows.length}</div>
+								<div class="mt-0.5 text-[10px] text-muted-foreground">{filteredRateioGroupCount} {filteredRateioGroupCount === 1 ? 'grupo' : 'grupos'}</div>
 							</div>
 							<div class="rounded-lg border bg-background p-3">
 								<div class="text-xs text-muted-foreground">Média por unidade</div>
 								<div class="mt-1 text-base font-bold text-foreground">
-									{formatCurrency(rateioRows.length ? totalExpenses / rateioRows.length : 0)}
+									{formatCurrency(filteredRateioRows.length ? filteredRateioRows.reduce((sum, row) => sum + row.total, 0) / filteredRateioRows.length : 0)}
 								</div>
 								<div class="mt-0.5 text-[10px] text-muted-foreground">
-									{formatCurrency(rateioRows.length ? Math.min(...rateioRows.map(r => r.total)) : 0)} — {formatCurrency(rateioMax)}
+									{formatCurrency(filteredRateioRows.length ? Math.min(...filteredRateioRows.map(r => r.total)) : 0)} — {formatCurrency(filteredRateioRows.length ? Math.max(...filteredRateioRows.map(r => r.total)) : 0)}
 								</div>
 							</div>
 						</div>
 
 						<!-- RATEIO GROUPS -->
-						<div>
+						<div class="flex flex-col">
+							<div class="border-b px-4 py-3">
+								<div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+									<div
+										id="balancete-rateio-block-filter-wrapper"
+										data-test="balancete-rateio-block-filter-wrapper"
+										class="w-full lg:w-56"
+									>
+										<select
+											id="balancete-rateio-block-filter-select"
+											data-test="balancete-rateio-block-filter-select"
+											class="flex h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+											value={rateioBlockFilter}
+											onchange={(event) => {
+												const target = event.currentTarget as HTMLSelectElement;
+												rateioBlockFilter = target.value;
+											}}
+										>
+											<option value="all">Todos os blocos</option>
+											{#each rateioBlockOptions.filter((option) => option !== 'all') as option}
+												<option value={option}>{option}</option>
+											{/each}
+										</select>
+									</div>
+
+									<div
+										id="balancete-rateio-unit-filter-wrapper"
+										data-test="balancete-rateio-unit-filter-wrapper"
+										class="relative w-full lg:w-72"
+									>
+										<SearchIcon class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+										<Input
+											id="balancete-rateio-unit-filter-input"
+											data-test="balancete-rateio-unit-filter-input"
+											value={rateioUnitFilter}
+											placeholder="Filtrar por unidade"
+											class="pl-9"
+											oninput={(event) => {
+												const target = event.currentTarget as HTMLInputElement;
+												rateioUnitFilter = target.value;
+											}}
+										/>
+									</div>
+								</div>
+							</div>
+
+							<div class="max-h-[42rem] overflow-y-auto">
+							{#if rateioGroups.length === 0}
+								<div
+									id="balancete-rateio-unit-filter-empty"
+									data-test="balancete-rateio-unit-filter-empty"
+									class="px-6 py-10 text-center"
+								>
+									<p class="text-sm font-medium text-foreground">Nenhuma unidade encontrada</p>
+									<p class="mt-1 text-xs text-muted-foreground">
+										Ajuste o filtro para visualizar outras unidades no rateio.
+									</p>
+								</div>
+							{:else}
 							{#each rateioGroups as group, gi}
 								<div class="border-b last:border-b-0">
 									<!-- GROUP HEADER -->
@@ -569,7 +711,88 @@
 							<!-- GRAND TOTAL -->
 							<div class="flex items-center justify-between border-t bg-muted/20 px-6 py-3">
 								<span class="text-sm font-semibold text-foreground">Total geral</span>
-								<span class="text-sm font-bold text-rose-700">{formatCurrency(totalExpenses)}</span>
+								<span class="text-sm font-bold text-rose-700">{formatCurrency(filteredRateioRows.reduce((sum, row) => sum + row.total, 0))}</span>
+							</div>
+							{/if}
+							</div>
+
+							<div class="flex flex-col gap-3 border-t px-4 py-3">
+								<div class="text-sm text-muted-foreground">
+									Mostrando {pagedRateioRows.length} de {filteredRateioRows.length} unidades no rateio.
+								</div>
+								<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+									<div class="flex items-center gap-2 sm:shrink-0">
+										<Label class="text-sm font-medium whitespace-nowrap">Linhas por página</Label>
+										<div class="flex items-center overflow-hidden rounded-md border border-input">
+											{#each [20, 50, 100] as size}
+												<button
+													type="button"
+													class={cn(
+														'h-9 min-w-10 border-r px-3 text-sm font-medium transition-colors last:border-r-0',
+														rateioPageSize === size
+															? 'bg-primary text-primary-foreground'
+															: 'bg-background text-foreground hover:bg-muted'
+													)}
+													onclick={() => {
+														rateioPageSize = size;
+													}}
+												>
+													{size}
+												</button>
+											{/each}
+										</div>
+									</div>
+
+									<div class="flex flex-wrap items-center gap-2 sm:justify-end">
+										<div class="text-sm font-medium whitespace-nowrap text-foreground">
+									Página {rateioCurrentPage} de {rateioTotalPages}
+										</div>
+										<div class="flex items-center gap-2">
+											<Button
+												variant="outline"
+												size="icon"
+												class="hidden sm:flex"
+												disabled={rateioCurrentPage <= 1}
+												onclick={() => {
+													rateioCurrentPage = 1;
+												}}
+											>
+												<ChevronsLeftIcon class="size-4" />
+											</Button>
+											<Button
+												variant="outline"
+												size="icon"
+												disabled={rateioCurrentPage <= 1}
+												onclick={() => {
+													rateioCurrentPage -= 1;
+												}}
+											>
+												<ChevronLeftIcon class="size-4" />
+											</Button>
+											<Button
+												variant="outline"
+												size="icon"
+												disabled={rateioCurrentPage >= rateioTotalPages}
+												onclick={() => {
+													rateioCurrentPage += 1;
+												}}
+											>
+												<ChevronRightIcon class="size-4" />
+											</Button>
+											<Button
+												variant="outline"
+												size="icon"
+												class="hidden sm:flex"
+												disabled={rateioCurrentPage >= rateioTotalPages}
+												onclick={() => {
+													rateioCurrentPage = rateioTotalPages;
+												}}
+											>
+												<ChevronsRightIcon class="size-4" />
+											</Button>
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					{/if}

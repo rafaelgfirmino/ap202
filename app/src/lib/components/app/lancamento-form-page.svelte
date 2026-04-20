@@ -332,8 +332,8 @@
 								<Tabs.Root value={formScope} onValueChange={(v) => { formScope = v as EntryScope; }}>
 									<Tabs.List class="w-full">
 										<Tabs.Trigger value="geral" class="flex-1">Geral</Tabs.Trigger>
-										<Tabs.Trigger value="bloco" class="flex-1">Por bloco</Tabs.Trigger>
-										<Tabs.Trigger value="unidade" class="flex-1">Por unidade</Tabs.Trigger>
+										<Tabs.Trigger value="bloco" class="flex-1">Bloco</Tabs.Trigger>
+										<Tabs.Trigger value="unidade" class="flex-1">Unidade</Tabs.Trigger>
 									</Tabs.List>
 								</Tabs.Root>
 								<p class="text-xs text-muted-foreground">
