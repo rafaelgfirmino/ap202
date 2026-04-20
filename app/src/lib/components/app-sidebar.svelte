@@ -52,6 +52,7 @@
 	const groupsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/grupos` : "#");
 	const unitsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/unidades` : "#");
 	const residentsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/moradores` : "#");
+	const balanceteUrl = $derived(condominiumCode ? `/g/${condominiumCode}/balancete` : "#");
 
 	const navMain = $derived([
 		{
@@ -96,8 +97,9 @@
 		},
 		{
 			title: "Balancetes",
-			url: "#",
+			url: balanceteUrl,
 			icon: ChartColumnIcon,
+			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/balancete` : "/balancete"),
 		},
 		{
 			title: "Comunicados",
