@@ -7,10 +7,7 @@
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import LockIcon from '@lucide/svelte/icons/lock';
 	import LockOpenIcon from '@lucide/svelte/icons/lock-open';
-	import Pencil2Icon from '@lucide/svelte/icons/pencil';
-	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SearchIcon from '@lucide/svelte/icons/search';
-	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import TrendingDownIcon from '@lucide/svelte/icons/trending-down';
 	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
 	import { onMount } from 'svelte';
@@ -26,13 +23,11 @@
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import {
 		closeBalancete,
-		deleteEntry,
 		getBalancete,
-		listEntries,
 		reopenBalancete,
-		type Balancete,
-		type BalanceteEntry
+		type Balancete
 	} from '$lib/services/balancete.js';
+	import { listLivroCaixaEntries, type LivroCaixaEntry } from '$lib/services/livro-caixa.js';
 	import { listUnits, type Unit } from '$lib/services/units.js';
 	import { cn } from '$lib/utils.js';
 
@@ -47,11 +42,10 @@
 	);
 
 	let balancete = $state<Balancete | null>(null);
-	let entries = $state<BalanceteEntry[]>([]);
+	let entries = $state<LivroCaixaEntry[]>([]);
 	let units = $state<Unit[]>([]);
 	let isLoading = $state(true);
 	let isActing = $state(false);
-	let deletingId = $state<number | null>(null);
 	let errorMessage = $state('');
 	let rateioBlockFilter = $state('all');
 	let rateioUnitFilter = $state('');
@@ -82,53 +76,43 @@
 		return new Date(iso).toLocaleDateString('pt-BR');
 	}
 
-	function getScopeLabel(entry: BalanceteEntry): string {
-		if (entry.scope === 'geral') return 'Geral';
-		if (entry.scope === 'bloco') return `Bloco ${entry.scope_value ?? ''}`;
-		return entry.scope_value ?? 'Unidade';
-	}
-
-	function getRateioLabel(method: string | null): string {
-		if (!method) return '—';
-		return ({ fracao: 'Fração ideal', igual: 'Partes iguais', area: 'Por m²' } as Record<string, string>)[method] ?? method;
+	function getOriginLabel(origin: string): string {
+		return ({ conta_a_pagar: 'Conta a pagar', pagamento_condomino: 'Condômino', manual: 'Manual' } as Record<string, string>)[origin] ?? origin;
 	}
 
 	// --- rateio calculation ---
 
-	function getEntryScopeUnits(entry: BalanceteEntry): Unit[] {
+	function getEntryScopeUnits(entry: LivroCaixaEntry): Unit[] {
 		if (entry.scope === 'geral') return units;
 		if (entry.scope === 'bloco') return units.filter((u) => u.group_name === entry.scope_value);
 		return units.filter((u) => String(u.id) === entry.scope_value);
 	}
 
-	function calcUnitEntryValue(unit: Unit, entry: BalanceteEntry, scopeUnits: Unit[]): number {
-		if (entry.scope === 'unidade') return entry.total_value;
+	function calcUnitEntryValue(unit: Unit, entry: LivroCaixaEntry, scopeUnits: Unit[]): number {
+		if (entry.scope === 'unidade') return entry.value;
 		const method = entry.rateio_method;
-		if (!method || method === 'igual') return entry.total_value / (scopeUnits.length || 1);
+		if (!method || method === 'igual') return entry.value / (scopeUnits.length || 1);
 		if (method === 'area') {
 			const totalArea = scopeUnits.reduce((s, u) => s + (u.private_area ?? 0), 0);
-			if (totalArea === 0) return entry.total_value / (scopeUnits.length || 1);
-			return entry.total_value * ((unit.private_area ?? 0) / totalArea);
+			if (totalArea === 0) return entry.value / (scopeUnits.length || 1);
+			return entry.value * ((unit.private_area ?? 0) / totalArea);
 		}
-		// fracao
 		const totalFrac = scopeUnits.reduce((s, u) => s + (u.ideal_fraction ?? 0), 0);
-		if (totalFrac === 0) return entry.total_value / (scopeUnits.length || 1);
-		return entry.total_value * ((unit.ideal_fraction ?? 0) / totalFrac);
+		if (totalFrac === 0) return entry.value / (scopeUnits.length || 1);
+		return entry.value * ((unit.ideal_fraction ?? 0) / totalFrac);
 	}
 
 	// --- derived state ---
 
 	const isOpen = $derived(balancete?.status === 'open');
 
-	const expenseEntries = $derived(entries.filter((e) => e.kind === 'expense'));
-	const revenueEntries = $derived(entries.filter((e) => e.kind === 'revenue'));
-	const totalExpenses = $derived(expenseEntries.reduce((s, e) => s + e.total_value, 0));
-	const totalRevenues = $derived(revenueEntries.reduce((s, e) => s + e.total_value, 0));
+	const expenseEntries = $derived(entries.filter((e) => e.type === 'saida'));
+	const revenueEntries = $derived(entries.filter((e) => e.type === 'entrada'));
+	const totalExpenses = $derived(expenseEntries.reduce((s, e) => s + e.value, 0));
+	const totalRevenues = $derived(revenueEntries.reduce((s, e) => s + e.value, 0));
 
-	// Per-unit aggregate from all expense entries
 	const rateioRows = $derived.by(() => {
 		if (expenseEntries.length === 0 || units.length === 0) return [];
-
 		const totals = new Map<number, number>();
 		for (const entry of expenseEntries) {
 			const scopeUnits = getEntryScopeUnits(entry);
@@ -137,7 +121,6 @@
 				totals.set(unit.id, (totals.get(unit.id) ?? 0) + v);
 			}
 		}
-
 		return units
 			.filter((u) => totals.has(u.id))
 			.map((u) => ({ unit: u, total: totals.get(u.id)! }))
@@ -147,60 +130,31 @@
 			});
 	});
 
-	const rateioMax = $derived(
-		rateioRows.length ? Math.max(...rateioRows.map((r) => r.total)) : 0
-	);
+	const rateioMax = $derived(rateioRows.length ? Math.max(...rateioRows.map((r) => r.total)) : 0);
 
 	const rateioBlockOptions = $derived.by(() => {
-		const blocks = Array.from(
-			new Set(rateioRows.map((row) => row.unit.group_name ?? 'Sem grupo'))
-		).sort((a, b) => a.localeCompare(b));
-
+		const blocks = Array.from(new Set(rateioRows.map((r) => r.unit.group_name ?? 'Sem grupo'))).sort();
 		return ['all', ...blocks];
 	});
 
 	const filteredRateioRows = $derived(
 		rateioRows.filter((row) => {
 			const blockName = row.unit.group_name ?? 'Sem grupo';
-			if (rateioBlockFilter !== 'all' && blockName !== rateioBlockFilter) {
-				return false;
-			}
-
-			const normalizedFilter = rateioUnitFilter.trim().toLowerCase();
-
-			if (normalizedFilter.length === 0) {
-				return true;
-			}
-
-			return [
-				row.unit.code,
-				row.unit.identifier,
-				row.unit.group_name ?? '',
-				row.unit.floor ?? ''
-			]
-				.join(' ')
-				.toLowerCase()
-				.includes(normalizedFilter);
+			if (rateioBlockFilter !== 'all' && blockName !== rateioBlockFilter) return false;
+			const q = rateioUnitFilter.trim().toLowerCase();
+			if (!q) return true;
+			return [row.unit.code, row.unit.identifier, row.unit.group_name ?? '', row.unit.floor ?? '']
+				.join(' ').toLowerCase().includes(q);
 		})
 	);
 
-	const rateioTotalPages = $derived(
-		Math.max(1, Math.ceil(filteredRateioRows.length / rateioPageSize))
-	);
-
+	const rateioTotalPages = $derived(Math.max(1, Math.ceil(filteredRateioRows.length / rateioPageSize)));
 	const pagedRateioRows = $derived(
-		filteredRateioRows.slice(
-			(rateioCurrentPage - 1) * rateioPageSize,
-			rateioCurrentPage * rateioPageSize
-		)
+		filteredRateioRows.slice((rateioCurrentPage - 1) * rateioPageSize, rateioCurrentPage * rateioPageSize)
 	);
-
 	const filteredRateioGroupCount = $derived.by(() => {
-		const groupNames = new Set(filteredRateioRows.map((row) => row.unit.group_name ?? 'Sem grupo'));
-		return groupNames.size;
+		return new Set(filteredRateioRows.map((r) => r.unit.group_name ?? 'Sem grupo')).size;
 	});
-
-	// Grouped by block for the rateio tab
 	const rateioGroups = $derived.by(() => {
 		const map = new Map<string, typeof rateioRows>();
 		for (const row of pagedRateioRows) {
@@ -209,10 +163,7 @@
 			map.get(key)!.push(row);
 		}
 		return Array.from(map.entries()).map(([name, rows], i) => ({
-			name,
-			rows,
-			colorIndex: i,
-			subtotal: rows.reduce((s, r) => s + r.total, 0)
+			name, rows, colorIndex: i, subtotal: rows.reduce((s, r) => s + r.total, 0)
 		}));
 	});
 
@@ -225,11 +176,11 @@
 		try {
 			const [b, e, u] = await Promise.all([
 				getBalancete(params.code, balanceteId),
-				listEntries(params.code, balanceteId),
+				listLivroCaixaEntries(params.code),
 				listUnits(params.code)
 			]);
 			balancete = b;
-			entries = e;
+			entries = e.filter((entry) => entry.date.startsWith(b.month));
 			units = u.data;
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Não foi possível carregar o balancete.';
@@ -255,42 +206,11 @@
 		finally { isActing = false; }
 	}
 
-	async function handleDelete(entryId: number): Promise<void> {
-		if (!balanceteId) return;
-		deletingId = entryId;
-		try {
-			await deleteEntry(params.code, balanceteId, entryId);
-			entries = entries.filter((e) => e.id !== entryId);
-		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Não foi possível excluir o lançamento.';
-		} finally { deletingId = null; }
-	}
-
-	$effect(() => {
-		rateioPageSize;
-		rateioCurrentPage = 1;
-	});
-
-	$effect(() => {
-		rateioRows;
-		rateioCurrentPage = 1;
-	});
-
-	$effect(() => {
-		rateioBlockFilter;
-		rateioCurrentPage = 1;
-	});
-
-	$effect(() => {
-		rateioUnitFilter;
-		rateioCurrentPage = 1;
-	});
-
-	$effect(() => {
-		if (rateioCurrentPage > rateioTotalPages) {
-			rateioCurrentPage = rateioTotalPages;
-		}
-	});
+	$effect(() => { rateioPageSize; rateioCurrentPage = 1; });
+	$effect(() => { rateioRows; rateioCurrentPage = 1; });
+	$effect(() => { rateioBlockFilter; rateioCurrentPage = 1; });
+	$effect(() => { rateioUnitFilter; rateioCurrentPage = 1; });
+	$effect(() => { if (rateioCurrentPage > rateioTotalPages) rateioCurrentPage = rateioTotalPages; });
 
 	onMount(async () => { await loadData(); });
 </script>
@@ -332,7 +252,6 @@
 					<p class="text-sm text-muted-foreground">
 						Fechado em {formatDate(balancete.closed_at)}
 						{#if balancete.due_date} · Vencimento {new Date(balancete.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}{/if}
-						· Nenhum novo lançamento pode ser adicionado.
 					</p>
 				{/if}
 			</div>
@@ -342,10 +261,6 @@
 					<Button type="button" variant="outline" disabled={isActing} onclick={() => { closeDueDate = ''; showCloseDialog = true; }}>
 						<LockIcon class="mr-2 size-4" />
 						{isActing ? 'Fechando…' : 'Fechar balancete'}
-					</Button>
-					<Button type="button" onclick={() => void goto(`/g/${params.code}/balancete/${balanceteId}/lancar`)}>
-						<PlusIcon class="mr-2 size-4" />
-						Novo lançamento
 					</Button>
 				{:else}
 					<Button type="button" variant="outline" disabled={isActing} onclick={handleReopen}>
@@ -366,7 +281,7 @@
 				<Dialog.Header>
 					<Dialog.Title>Fechar balancete</Dialog.Title>
 					<Dialog.Description>
-						Defina o vencimento dos boletos. Após fechar, nenhum novo lançamento poderá ser adicionado.
+						Defina o vencimento dos boletos. Após fechar, o balancete não poderá receber novas movimentações.
 					</Dialog.Description>
 				</Dialog.Header>
 				<div class="space-y-2 py-2">
@@ -376,9 +291,7 @@
 					/>
 				</div>
 				<Dialog.Footer>
-					<Button variant="outline" onclick={() => { showCloseDialog = false; }} disabled={isActing}>
-						Cancelar
-					</Button>
+					<Button variant="outline" onclick={() => { showCloseDialog = false; }} disabled={isActing}>Cancelar</Button>
 					<Button onclick={handleClose} disabled={isActing || !closeDueDate}>
 						{isActing ? 'Fechando…' : 'Fechar balancete'}
 					</Button>
@@ -398,9 +311,9 @@
 						<TrendingDownIcon class="size-5" />
 					</div>
 					<div>
-						<div class="text-xs text-muted-foreground">Total de despesas</div>
+						<div class="text-xs text-muted-foreground">Total de saídas</div>
 						<div class="text-xl font-bold text-foreground">{formatCurrency(totalExpenses)}</div>
-						<div class="text-xs text-muted-foreground">{expenseEntries.length} lançamentos</div>
+						<div class="text-xs text-muted-foreground">{expenseEntries.length} movimentações</div>
 					</div>
 				</Card.Content>
 			</Card.Root>
@@ -411,49 +324,47 @@
 						<TrendingUpIcon class="size-5" />
 					</div>
 					<div>
-						<div class="text-xs text-muted-foreground">Receitas (informacional)</div>
+						<div class="text-xs text-muted-foreground">Total de entradas</div>
 						<div class="text-xl font-bold text-foreground">{formatCurrency(totalRevenues)}</div>
-						<div class="text-xs text-muted-foreground">{revenueEntries.length} lançamentos</div>
+						<div class="text-xs text-muted-foreground">{revenueEntries.length} movimentações</div>
 					</div>
 				</Card.Content>
 			</Card.Root>
 
 			<Card.Root>
 				<Card.Content class="flex items-center gap-4 py-4">
-					<div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+					<div class={cn('flex size-10 shrink-0 items-center justify-center rounded-full', totalExpenses > 0 ? 'bg-muted text-muted-foreground' : 'bg-emerald-100 text-emerald-600')}>
 						<TrendingDownIcon class="size-5" />
 					</div>
 					<div>
 						<div class="text-xs text-muted-foreground">A ratear pelas unidades</div>
 						<div class="text-xl font-bold text-foreground">{formatCurrency(totalExpenses)}</div>
-						<div class="text-xs text-muted-foreground">Receitas não abaterão cobranças</div>
+						<div class="text-xs text-muted-foreground">Entradas não abaterão cobranças</div>
 					</div>
 				</Card.Content>
 			</Card.Root>
 		</div>
 
-		<!-- TABS: LANÇAMENTOS | RATEIO -->
+		<!-- TABS: MOVIMENTAÇÕES | RATEIO -->
 		<Card.Root class="overflow-hidden">
-			<Tabs.Root value="lancamentos">
+			<Tabs.Root value="movimentacoes">
 				<Card.Header class="border-b pb-0">
 					<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 						<Card.Title>Detalhamento</Card.Title>
 						<Tabs.List>
-							<Tabs.Trigger value="lancamentos">Lançamentos</Tabs.Trigger>
+							<Tabs.Trigger value="movimentacoes">Movimentações</Tabs.Trigger>
 							<Tabs.Trigger value="rateio">Rateio por unidade</Tabs.Trigger>
 						</Tabs.List>
 					</div>
 				</Card.Header>
 
-				<!-- TAB: LANÇAMENTOS -->
-				<Tabs.Content value="lancamentos" class="mt-0">
+				<!-- TAB: MOVIMENTAÇÕES -->
+				<Tabs.Content value="movimentacoes" class="mt-0">
 					{#if entries.length === 0}
 						<div class="p-4">
 							<CardEmpty
-								title="Nenhum lançamento ainda"
-								description={isOpen ? 'Este balancete está aberto. Adicione despesas e receitas do mês.' : 'Este balancete foi fechado sem lançamentos.'}
-								actionLabel={isOpen ? 'Adicionar lançamento' : ''}
-								onAction={isOpen ? () => void goto(`/g/${params.code}/balancete/${balanceteId}/lancar`) : undefined}
+								title="Nenhuma movimentação neste mês"
+								description="As movimentações aparecem aqui conforme contas são pagas e pagamentos de condôminos são registrados."
 							/>
 						</div>
 					{:else}
@@ -461,77 +372,49 @@
 							<Table.Root class="text-sm">
 								<Table.Header class="bg-muted/35">
 									<Table.Row class="hover:bg-transparent">
-										<Table.Head class="w-24 pl-6">Tipo</Table.Head>
-										<Table.Head class="w-36">Categoria</Table.Head>
-										<Table.Head class="w-32">Escopo</Table.Head>
-										<Table.Head class="w-32">Rateio</Table.Head>
+										<Table.Head class="w-28 pl-6">Data</Table.Head>
 										<Table.Head>Descrição</Table.Head>
-										<Table.Head class="w-28">Vencimento</Table.Head>
-										<Table.Head class="w-32 text-right">Valor</Table.Head>
-										{#if isOpen}<Table.Head class="w-24 pr-6 text-right">Ações</Table.Head>{/if}
+										<Table.Head class="w-32">Categoria</Table.Head>
+										<Table.Head class="w-24">Tipo</Table.Head>
+										<Table.Head class="w-32">Conta</Table.Head>
+										<Table.Head class="w-28">Origem</Table.Head>
+										<Table.Head class="w-32 pr-6 text-right">Valor</Table.Head>
 									</Table.Row>
 								</Table.Header>
 								<Table.Body>
 									{#each entries as entry (entry.id)}
 										<Table.Row>
-											<Table.Cell class="pl-6">
-												<Tooltip.Root>
-													<Tooltip.Trigger>
-														<span class={cn(
-															'inline-flex cursor-default items-center rounded-full px-2 py-0.5 text-xs font-medium',
-															entry.kind === 'expense' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
-														)}>
-															{entry.kind === 'expense' ? 'Despesa' : 'Receita'}
-														</span>
-													</Tooltip.Trigger>
-													{#if entry.description}
-														<Tooltip.Content side="right" class="max-w-64">{entry.description}</Tooltip.Content>
-													{/if}
-												</Tooltip.Root>
+											<Table.Cell class="pl-6 text-muted-foreground">
+												{new Date(entry.date + 'T00:00:00').toLocaleDateString('pt-BR')}
 											</Table.Cell>
-											<Table.Cell class="font-medium">{entry.category}</Table.Cell>
-											<Table.Cell class="text-muted-foreground">{getScopeLabel(entry)}</Table.Cell>
-											<Table.Cell class="text-muted-foreground">
-												{entry.kind === 'revenue' ? '—' : getRateioLabel(entry.rateio_method)}
+											<Table.Cell class="max-w-xs">
+												<div class="truncate font-medium">{entry.description}</div>
 											</Table.Cell>
-											<Table.Cell class="max-w-xs text-muted-foreground">
-												<div class="truncate">{entry.description || '—'}</div>
-											</Table.Cell>
-											<Table.Cell class="text-muted-foreground">
-												{entry.due_date ? new Date(entry.due_date + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}
-											</Table.Cell>
-											<Table.Cell class="text-right font-bold">
-												<span class={entry.kind === 'expense' ? 'text-rose-700' : 'text-emerald-700'}>
-													{entry.kind === 'expense' ? '−' : '+'}{formatCurrency(entry.total_value)}
+											<Table.Cell class="text-muted-foreground">{entry.category}</Table.Cell>
+											<Table.Cell>
+												<span class={cn(
+													'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+													entry.type === 'saida' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+												)}>
+													{entry.type === 'saida' ? 'Saída' : 'Entrada'}
 												</span>
 											</Table.Cell>
-											{#if isOpen}
-												<Table.Cell class="pr-6 text-right">
-													<div class="flex items-center justify-end gap-1">
-														<Tooltip.Root>
-															<Tooltip.Trigger>
-																<Button type="button" variant="outline" size="icon" class="size-8"
-																	onclick={() => void goto(`/g/${params.code}/balancete/${balanceteId}/lancar/${entry.id}`)}
-																>
-																	<Pencil2Icon class="size-4" />
-																</Button>
-															</Tooltip.Trigger>
-															<Tooltip.Content side="top">Editar lançamento</Tooltip.Content>
-														</Tooltip.Root>
-														<Tooltip.Root>
-															<Tooltip.Trigger>
-																<Button type="button" variant="outline" size="icon" class="size-8"
-																	disabled={deletingId === entry.id}
-																	onclick={() => void handleDelete(entry.id)}
-																>
-																	<Trash2Icon class="size-4" />
-																</Button>
-															</Tooltip.Trigger>
-															<Tooltip.Content side="top">Excluir lançamento</Tooltip.Content>
-														</Tooltip.Root>
-													</div>
-												</Table.Cell>
-											{/if}
+											<Table.Cell class="text-xs text-muted-foreground">{entry.bank_account_name}</Table.Cell>
+											<Table.Cell>
+												<span class={cn(
+													'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+													entry.origin === 'conta_a_pagar' ? 'bg-muted text-muted-foreground' :
+													entry.origin === 'pagamento_condomino' ? 'bg-sky-100 text-sky-700' :
+													'bg-amber-100 text-amber-700'
+												)}>
+													{getOriginLabel(entry.origin)}
+												</span>
+											</Table.Cell>
+											<Table.Cell class="pr-6 text-right font-bold">
+												<span class={entry.type === 'saida' ? 'text-rose-700' : 'text-emerald-700'}>
+													{entry.type === 'saida' ? '−' : '+'}{formatCurrency(entry.value)}
+												</span>
+											</Table.Cell>
 										</Table.Row>
 									{/each}
 								</Table.Body>
@@ -544,10 +427,8 @@
 				<Tabs.Content value="rateio" class="mt-0">
 					{#if expenseEntries.length === 0}
 						<div class="px-6 py-10 text-center">
-							<p class="text-sm font-medium text-foreground">Nenhuma despesa lançada</p>
-							<p class="mt-1 text-xs text-muted-foreground">
-								Adicione despesas ao balancete para visualizar o rateio consolidado por unidade.
-							</p>
+							<p class="text-sm font-medium text-foreground">Nenhuma saída registrada</p>
+							<p class="mt-1 text-xs text-muted-foreground">Registre pagamentos de contas para visualizar o rateio por unidade.</p>
 						</div>
 					{:else if units.length === 0}
 						<div class="px-6 py-10 text-center">
@@ -559,7 +440,7 @@
 							<div class="rounded-lg border bg-background p-3">
 								<div class="text-xs text-muted-foreground">Total a ratear</div>
 								<div class="mt-1 text-base font-bold text-foreground">{formatCurrency(totalExpenses)}</div>
-								<div class="mt-0.5 text-[10px] text-muted-foreground">{expenseEntries.length} {expenseEntries.length === 1 ? 'despesa' : 'despesas'}</div>
+								<div class="mt-0.5 text-[10px] text-muted-foreground">{expenseEntries.length} {expenseEntries.length === 1 ? 'saída' : 'saídas'}</div>
 							</div>
 							<div class="rounded-lg border bg-background p-3">
 								<div class="text-xs text-muted-foreground">Unidades afetadas</div>
@@ -569,77 +450,47 @@
 							<div class="rounded-lg border bg-background p-3">
 								<div class="text-xs text-muted-foreground">Média por unidade</div>
 								<div class="mt-1 text-base font-bold text-foreground">
-									{formatCurrency(filteredRateioRows.length ? filteredRateioRows.reduce((sum, row) => sum + row.total, 0) / filteredRateioRows.length : 0)}
+									{formatCurrency(rateioRows.length ? totalExpenses / rateioRows.length : 0)}
 								</div>
 								<div class="mt-0.5 text-[10px] text-muted-foreground">
-									{formatCurrency(filteredRateioRows.length ? Math.min(...filteredRateioRows.map(r => r.total)) : 0)} — {formatCurrency(filteredRateioRows.length ? Math.max(...filteredRateioRows.map(r => r.total)) : 0)}
+									{formatCurrency(rateioRows.length ? Math.min(...rateioRows.map(r => r.total)) : 0)} — {formatCurrency(rateioMax)}
 								</div>
 							</div>
 						</div>
 
-						<!-- RATEIO GROUPS -->
-						<div class="flex flex-col">
-							<div class="border-b px-4 py-3">
-								<div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-									<div
-										id="balancete-rateio-block-filter-wrapper"
-										data-test="balancete-rateio-block-filter-wrapper"
-										class="w-full lg:w-56"
-									>
-										<select
-											id="balancete-rateio-block-filter-select"
-											data-test="balancete-rateio-block-filter-select"
-											class="flex h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-											value={rateioBlockFilter}
-											onchange={(event) => {
-												const target = event.currentTarget as HTMLSelectElement;
-												rateioBlockFilter = target.value;
-											}}
-										>
-											<option value="all">Todos os blocos</option>
-											{#each rateioBlockOptions.filter((option) => option !== 'all') as option}
-												<option value={option}>{option}</option>
-											{/each}
-										</select>
-									</div>
-
-									<div
-										id="balancete-rateio-unit-filter-wrapper"
-										data-test="balancete-rateio-unit-filter-wrapper"
-										class="relative w-full lg:w-72"
-									>
-										<SearchIcon class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-										<Input
-											id="balancete-rateio-unit-filter-input"
-											data-test="balancete-rateio-unit-filter-input"
-											value={rateioUnitFilter}
-											placeholder="Filtrar por unidade"
-											class="pl-9"
-											oninput={(event) => {
-												const target = event.currentTarget as HTMLInputElement;
-												rateioUnitFilter = target.value;
-											}}
-										/>
-									</div>
-								</div>
+						<!-- FILTROS DO RATEIO -->
+						<div class="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+							<select
+								class="h-8 rounded-md border border-input bg-input/20 px-2 text-xs outline-none focus-visible:border-ring"
+								value={rateioBlockFilter}
+								onchange={(e) => { rateioBlockFilter = (e.currentTarget as HTMLSelectElement).value; }}
+							>
+								{#each rateioBlockOptions as opt}
+									<option value={opt}>{opt === 'all' ? 'Todos os blocos' : opt}</option>
+								{/each}
+							</select>
+							<div class="relative flex-1 sm:max-w-60">
+								<SearchIcon class="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+								<Input
+									placeholder="Buscar unidade…"
+									class="h-8 pl-7 text-xs"
+									value={rateioUnitFilter}
+									oninput={(e) => { rateioUnitFilter = (e.currentTarget as HTMLInputElement).value; }}
+								/>
 							</div>
+							<select
+								class="h-8 rounded-md border border-input bg-input/20 px-2 text-xs outline-none focus-visible:border-ring"
+								value={String(rateioPageSize)}
+								onchange={(e) => { rateioPageSize = Number((e.currentTarget as HTMLSelectElement).value); }}
+							>
+								{#each [10, 20, 50] as size}<option value={String(size)}>{size} por página</option>{/each}
+							</select>
+						</div>
 
-							<div class="max-h-[42rem] overflow-y-auto">
-							{#if rateioGroups.length === 0}
-								<div
-									id="balancete-rateio-unit-filter-empty"
-									data-test="balancete-rateio-unit-filter-empty"
-									class="px-6 py-10 text-center"
-								>
-									<p class="text-sm font-medium text-foreground">Nenhuma unidade encontrada</p>
-									<p class="mt-1 text-xs text-muted-foreground">
-										Ajuste o filtro para visualizar outras unidades no rateio.
-									</p>
-								</div>
-							{:else}
+						<!-- RATEIO GROUPS -->
+						<div>
 							{#each rateioGroups as group, gi}
 								<div class="border-b last:border-b-0">
-									<!-- GROUP HEADER -->
 									<div class="flex items-center justify-between bg-muted/30 px-6 py-2.5">
 										<div class="flex items-center gap-2">
 											<div class={cn('flex size-5 items-center justify-center rounded text-[9px] font-bold', ROW_COLORS[gi % ROW_COLORS.length])}>
@@ -651,17 +502,13 @@
 										<span class="text-xs font-bold text-foreground">{formatCurrency(group.subtotal)}</span>
 									</div>
 
-									<!-- UNIT ROWS -->
 									{#each group.rows as row, idx}
 										{@const pct = rateioMax > 0 ? Math.round((row.total / rateioMax) * 100) : 0}
 										{@const colorClass = ROW_COLORS[(gi * 8 + idx) % ROW_COLORS.length]!}
 										<div class="flex items-center gap-4 px-6 py-3 transition-colors hover:bg-muted/10">
-											<!-- avatar -->
 											<div class={cn('flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold', colorClass)}>
 												{row.unit.identifier.slice(0, 3)}
 											</div>
-
-											<!-- info -->
 											<div class="min-w-0 flex-1">
 												<div class="flex items-center gap-2">
 													<span class="text-sm font-medium text-foreground">{row.unit.code}</span>
@@ -669,7 +516,6 @@
 														<span class="text-xs text-muted-foreground">{row.unit.floor}º andar</span>
 													{/if}
 												</div>
-												<!-- entry breakdown pills -->
 												<div class="mt-1 flex flex-wrap gap-1">
 													{#each expenseEntries as entry}
 														{@const scopeUnits = getEntryScopeUnits(entry)}
@@ -690,8 +536,6 @@
 													{/each}
 												</div>
 											</div>
-
-											<!-- bar + value -->
 											<div class="flex shrink-0 items-center gap-3">
 												<div class="hidden w-24 sm:block">
 													<div class="mb-1 h-1.5 overflow-hidden rounded-full bg-muted">
@@ -711,89 +555,35 @@
 							<!-- GRAND TOTAL -->
 							<div class="flex items-center justify-between border-t bg-muted/20 px-6 py-3">
 								<span class="text-sm font-semibold text-foreground">Total geral</span>
-								<span class="text-sm font-bold text-rose-700">{formatCurrency(filteredRateioRows.reduce((sum, row) => sum + row.total, 0))}</span>
+								<span class="text-sm font-bold text-rose-700">{formatCurrency(totalExpenses)}</span>
 							</div>
+
+							<!-- PAGINATION -->
+							{#if rateioTotalPages > 1}
+								<div class="flex items-center justify-between border-t px-6 py-3">
+									<span class="text-xs text-muted-foreground">
+										{filteredRateioRows.length} unidades · página {rateioCurrentPage} de {rateioTotalPages}
+									</span>
+									<div class="flex items-center gap-1">
+										<Button variant="outline" size="icon" class="size-7" disabled={rateioCurrentPage === 1}
+											onclick={() => { rateioCurrentPage = 1; }}>
+											<ChevronsLeftIcon class="size-3.5" />
+										</Button>
+										<Button variant="outline" size="icon" class="size-7" disabled={rateioCurrentPage === 1}
+											onclick={() => { rateioCurrentPage -= 1; }}>
+											<ChevronLeftIcon class="size-3.5" />
+										</Button>
+										<Button variant="outline" size="icon" class="size-7" disabled={rateioCurrentPage === rateioTotalPages}
+											onclick={() => { rateioCurrentPage += 1; }}>
+											<ChevronRightIcon class="size-3.5" />
+										</Button>
+										<Button variant="outline" size="icon" class="size-7" disabled={rateioCurrentPage === rateioTotalPages}
+											onclick={() => { rateioCurrentPage = rateioTotalPages; }}>
+											<ChevronsRightIcon class="size-3.5" />
+										</Button>
+									</div>
+								</div>
 							{/if}
-							</div>
-
-							<div class="flex flex-col gap-3 border-t px-4 py-3">
-								<div class="text-sm text-muted-foreground">
-									Mostrando {pagedRateioRows.length} de {filteredRateioRows.length} unidades no rateio.
-								</div>
-								<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-									<div class="flex items-center gap-2 sm:shrink-0">
-										<Label class="text-sm font-medium whitespace-nowrap">Linhas por página</Label>
-										<div class="flex items-center overflow-hidden rounded-md border border-input">
-											{#each [20, 50, 100] as size}
-												<button
-													type="button"
-													class={cn(
-														'h-9 min-w-10 border-r px-3 text-sm font-medium transition-colors last:border-r-0',
-														rateioPageSize === size
-															? 'bg-primary text-primary-foreground'
-															: 'bg-background text-foreground hover:bg-muted'
-													)}
-													onclick={() => {
-														rateioPageSize = size;
-													}}
-												>
-													{size}
-												</button>
-											{/each}
-										</div>
-									</div>
-
-									<div class="flex flex-wrap items-center gap-2 sm:justify-end">
-										<div class="text-sm font-medium whitespace-nowrap text-foreground">
-									Página {rateioCurrentPage} de {rateioTotalPages}
-										</div>
-										<div class="flex items-center gap-2">
-											<Button
-												variant="outline"
-												size="icon"
-												class="hidden sm:flex"
-												disabled={rateioCurrentPage <= 1}
-												onclick={() => {
-													rateioCurrentPage = 1;
-												}}
-											>
-												<ChevronsLeftIcon class="size-4" />
-											</Button>
-											<Button
-												variant="outline"
-												size="icon"
-												disabled={rateioCurrentPage <= 1}
-												onclick={() => {
-													rateioCurrentPage -= 1;
-												}}
-											>
-												<ChevronLeftIcon class="size-4" />
-											</Button>
-											<Button
-												variant="outline"
-												size="icon"
-												disabled={rateioCurrentPage >= rateioTotalPages}
-												onclick={() => {
-													rateioCurrentPage += 1;
-												}}
-											>
-												<ChevronRightIcon class="size-4" />
-											</Button>
-											<Button
-												variant="outline"
-												size="icon"
-												class="hidden sm:flex"
-												disabled={rateioCurrentPage >= rateioTotalPages}
-												onclick={() => {
-													rateioCurrentPage = rateioTotalPages;
-												}}
-											>
-												<ChevronsRightIcon class="size-4" />
-											</Button>
-										</div>
-									</div>
-								</div>
-							</div>
 						</div>
 					{/if}
 				</Tabs.Content>

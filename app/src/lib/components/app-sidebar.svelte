@@ -1,28 +1,21 @@
 <script lang="ts">
-	import { page } from "$app/state";
-	import type { AuthenticatedUser } from "$lib/services/auth.js";
-	import BadgeDollarSignIcon from "@lucide/svelte/icons/badge-dollar-sign";
-	import BlocksIcon from "@lucide/svelte/icons/blocks";
-	import Building2Icon from "@lucide/svelte/icons/building-2";
-	import BuildingIcon from "@lucide/svelte/icons/building";
-	import ChartColumnIcon from "@lucide/svelte/icons/chart-column";
-	import DoorOpenIcon from "@lucide/svelte/icons/door-open";
-	import FolderOpenIcon from "@lucide/svelte/icons/folder-open";
-	import LandmarkIcon from "@lucide/svelte/icons/landmark";
-	import LayoutDashboardIcon from "@lucide/svelte/icons/layout-dashboard";
-	import MapIcon from "@lucide/svelte/icons/map";
-	import MegaphoneIcon from "@lucide/svelte/icons/megaphone";
-	import PaletteIcon from "@lucide/svelte/icons/palette";
-	import PlugIcon from "@lucide/svelte/icons/plug";
-	import SettingsIcon from "@lucide/svelte/icons/settings";
-	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
-	import UserCogIcon from "@lucide/svelte/icons/user-cog";
-	import UsersIcon from "@lucide/svelte/icons/users";
-	import WrenchIcon from "@lucide/svelte/icons/wrench";
-	import NavMain from "./nav-main.svelte";
-	import NavUser from "./nav-user.svelte";
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-	import type { ComponentProps } from "svelte";
+	import { page } from '$app/state';
+	import type { AuthenticatedUser } from '$lib/services/auth.js';
+	import BlocksIcon from '@lucide/svelte/icons/blocks';
+	import BookOpenIcon from '@lucide/svelte/icons/book-open';
+	import Building2Icon from '@lucide/svelte/icons/building-2';
+	import ChartColumnIcon from '@lucide/svelte/icons/chart-column';
+	import ClipboardListIcon from '@lucide/svelte/icons/clipboard-list';
+	import DoorOpenIcon from '@lucide/svelte/icons/door-open';
+	import LandmarkIcon from '@lucide/svelte/icons/landmark';
+	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
+	import MapIcon from '@lucide/svelte/icons/map';
+	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
+	import UsersIcon from '@lucide/svelte/icons/users';
+	import NavMain from './nav-main.svelte';
+	import NavUser from './nav-user.svelte';
+	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import type { ComponentProps } from 'svelte';
 
 	type NavItem = {
 		title: string;
@@ -36,124 +29,116 @@
 
 	let {
 		ref = $bindable(null),
-		collapsible = "icon",
+		collapsible = 'icon',
 		user = {
-			name: "Usuario",
-			email: "",
-			avatar: "",
+			name: 'Usuario',
+			email: '',
+			avatar: ''
 		},
 		...restProps
 	}: ComponentProps<typeof Sidebar.Root> & {
-		user?: Pick<AuthenticatedUser, "name" | "email"> & { avatar?: string };
+		user?: Pick<AuthenticatedUser, 'name' | 'email'> & { avatar?: string };
 	} = $props();
 
-	const condominiumCode = $derived(page.params.code ?? "");
-	const dashboardUrl = $derived(condominiumCode ? `/g/${condominiumCode}` : "/");
-	const groupsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/grupos` : "#");
-	const unitsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/unidades` : "#");
-	const residentsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/moradores` : "#");
-	const balanceteUrl = $derived(condominiumCode ? `/g/${condominiumCode}/balancete` : "#");
+	const condominiumCode = $derived(page.params.code ?? '');
+	const dashboardUrl = $derived(condominiumCode ? `/g/${condominiumCode}` : '/');
+	const groupsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/grupos` : '#');
+	const unitsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/unidades` : '#');
+	const residentsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/moradores` : '#');
+	const usersUrl = $derived(condominiumCode ? `/g/${condominiumCode}/usuarios` : '#');
+	const contasUrl = $derived(condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '#');
+	const livroCaixaUrl = $derived(condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '#');
+	const balanceteUrl = $derived(condominiumCode ? `/g/${condominiumCode}/balancete` : '#');
+	const financeiroActive = $derived(
+		page.url.pathname.startsWith(
+			condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '/contas-a-pagar'
+		) ||
+			page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '/livro-caixa'
+			) ||
+			page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/balancete` : '/balancete'
+			)
+	);
 
 	const navMain = $derived([
 		{
-			title: "Dashboard",
+			title: 'Dashboard',
 			url: dashboardUrl,
 			icon: LayoutDashboardIcon,
-			isActive: page.url.pathname === dashboardUrl,
+			isActive: page.url.pathname === dashboardUrl
 		},
 		{
-			title: "Estrutura",
-			url: "#",
+			title: 'Estrutura',
+			url: '#',
 			icon: Building2Icon,
-			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/` : "/g/"),
+			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/` : '/g/'),
 			items: [
 				{
-					title: "Grupos",
+					title: 'Grupos',
 					url: groupsUrl,
-					icon: BlocksIcon,
+					icon: BlocksIcon
 				},
 				{
-					title: "Unidades",
+					title: 'Unidades',
 					url: unitsUrl,
-					icon: DoorOpenIcon,
+					icon: DoorOpenIcon
 				},
 				{
-					title: "Áreas comuns",
-					url: "#",
-					icon: MapIcon,
-				},
-			],
+					title: 'Áreas comuns',
+					url: '#',
+					icon: MapIcon
+				}
+			]
 		},
 		{
-			title: "Moradores",
+			title: 'Moradores',
 			url: residentsUrl,
 			icon: UsersIcon,
-			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/moradores` : "/moradores"),
+			isActive: page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/moradores` : '/moradores'
+			)
 		},
 		{
-			title: "Financeiro",
-			url: "#",
+			title: 'Financeiro',
+			url: '#',
 			icon: LandmarkIcon,
-		},
-		{
-			title: "Balancetes",
-			url: balanceteUrl,
-			icon: ChartColumnIcon,
-			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/balancete` : "/balancete"),
-		},
-		{
-			title: "Comunicados",
-			url: "#",
-			icon: MegaphoneIcon,
-		},
-		{
-			title: "Chamados",
-			url: "#",
-			icon: WrenchIcon,
-		},
-		{
-			title: "Documentos",
-			url: "#",
-			icon: FolderOpenIcon,
-		},
-		{
-			title: "Usuários",
-			url: "#",
-			icon: ShieldCheckIcon,
-		},
-		{
-			title: "Configurações",
-			url: "#",
-			icon: SettingsIcon,
-			isActive: true,
+			isActive: financeiroActive,
 			items: [
 				{
-					title: "Geral",
-					url: "#",
-					icon: BuildingIcon,
+					title: 'Contas a Pagar',
+					url: contasUrl,
+					icon: ClipboardListIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '/contas-a-pagar'
+					)
 				},
 				{
-					title: "Cobrança",
-					url: "#",
-					icon: BadgeDollarSignIcon,
+					title: 'Livro Caixa',
+					url: livroCaixaUrl,
+					icon: BookOpenIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '/livro-caixa'
+					)
 				},
 				{
-					title: "Usuários",
-					url: "#",
-					icon: UserCogIcon,
-				},
-				{
-					title: "Integrações",
-					url: "#",
-					icon: PlugIcon,
-				},
-				{
-					title: "Personalização",
-					url: "#",
-					icon: PaletteIcon,
-				},
-			],
+					title: 'Balancetes',
+					url: balanceteUrl,
+					icon: ChartColumnIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/balancete` : '/balancete'
+					)
+				}
+			]
 		},
+		{
+			title: 'Usuários',
+			url: usersUrl,
+			icon: ShieldCheckIcon,
+			isActive: page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/usuarios` : '/usuarios'
+			)
+		}
 	] satisfies NavItem[]);
 </script>
 
@@ -162,7 +147,7 @@
 		<NavMain items={navMain} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={{ ...user, avatar: user.avatar ?? "" }} />
+		<NavUser user={{ ...user, avatar: user.avatar ?? '' }} />
 	</Sidebar.Footer>
 	<Sidebar.Rail />
 </Sidebar.Root>
