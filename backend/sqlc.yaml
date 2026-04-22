@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/adapters/output/postgres/queries"
+    schema: "internal/adapters/output/postgres/schema"
+    gen:
+      go:
+        package: "sqlcgen"
+        out: "internal/adapters/output/postgres/sqlcgen"
+        sql_package: "database/sql"
+        emit_json_tags: false
+        emit_empty_slices: true

@@ -1,0 +1,57 @@
+package usecase
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"ap202/internal/domain"
+)
+
+func TestChargeUseCase_Create_Success(t *testing.T) {
+	chargeRepo := &mockChargeRepo{}
+	condoRepo := &mockCondoRepo{
+		getByIDResult: &domain.Condominium{ID: 1, FeeRule: domain.FeeRuleEqual},
+	}
+	uc := NewChargeUseCase(chargeRepo, &mockAssociationRepo{exists: true}, condoRepo)
+
+	charge, err := uc.Create(context.Background(), 10, "ABC1234", domain.CreateChargeInput{
+		Description:         "Taxa ordinaria",
+		TotalAmountCentavos: 10001,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if charge.FeeRule != domain.FeeRuleEqual {
+		t.Fatalf("expected fee rule equal, got %s", charge.FeeRule)
+	}
+	if chargeRepo.created == nil {
+		t.Fatal("expected charge to be forwarded to repository")
+	}
+	if chargeRepo.created.TotalAmountCentavos != 10001 {
+		t.Fatalf("expected 10001 centavos, got %d", chargeRepo.created.TotalAmountCentavos)
+	}
+}
+
+func TestChargeUseCase_Create_InvalidAmount(t *testing.T) {
+	uc := NewChargeUseCase(&mockChargeRepo{}, &mockAssociationRepo{exists: true}, &mockCondoRepo{
+		getByIDResult: &domain.Condominium{ID: 1, FeeRule: domain.FeeRuleEqual},
+	})
+
+	_, err := uc.Create(context.Background(), 10, "ABC1234", domain.CreateChargeInput{})
+	if !errors.Is(err, domain.ErrChargeTotalAmountInvalid) {
+		t.Fatalf("expected invalid charge total amount, got %v", err)
+	}
+}
+
+func TestChargeUseCase_Create_Forbidden(t *testing.T) {
+	uc := NewChargeUseCase(&mockChargeRepo{}, &mockAssociationRepo{exists: false}, &mockCondoRepo{})
+
+	_, err := uc.Create(context.Background(), 10, "ABC1234", domain.CreateChargeInput{
+		TotalAmountCentavos: 100,
+	})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("expected forbidden, got %v", err)
+	}
+}
