@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"ap202/internal/adapters/input/http/handlers"
 	httpmiddleware "ap202/internal/adapters/input/http/middleware"
 	"ap202/internal/adapters/output/postgres"
+	"ap202/internal/authz"
 	"ap202/internal/ports"
 	"ap202/internal/ports/input"
 	"ap202/internal/ports/output"
@@ -16,22 +18,28 @@ import (
 )
 
 type HTTPServer struct {
-	port               int
-	authMiddleware     *httpmiddleware.AuthMiddleware
-	homeHandler        *handlers.HomeHandler
-	healthHandler      *handlers.HealthHandler
-	condominiumHandler *handlers.CondominiumHandler
-	unitHandler        *handlers.UnitHandler
-	unitGroupHandler   *handlers.UnitGroupHandler
-	chargeHandler      *handlers.ChargeHandler
-	expenseHandler     *handlers.ExpenseHandler
-	memberHandler      *handlers.MemberHandler
-	userHandler        *handlers.UserHandler
+	port                  int
+	authMiddleware        *httpmiddleware.AuthMiddleware
+	condominiumMiddleware *httpmiddleware.CondominiumMiddleware
+	homeHandler           *handlers.HomeHandler
+	healthHandler         *handlers.HealthHandler
+	condominiumHandler    *handlers.CondominiumHandler
+	unitHandler           *handlers.UnitHandler
+	unitGroupHandler      *handlers.UnitGroupHandler
+	chargeHandler         *handlers.ChargeHandler
+	expenseHandler        *handlers.ExpenseHandler
+	memberHandler         *handlers.MemberHandler
+	userHandler           *handlers.UserHandler
+	permissionHandler     *handlers.PermissionHandler
+	roleHandler           *handlers.RoleHandler
+	assignmentHandler     *handlers.AssignmentHandler
+	tenantHandler         *handlers.TenantHandler
 }
 
 func NewHTTPServer(
 	port int,
 	authMiddleware *httpmiddleware.AuthMiddleware,
+	condominiumMiddleware *httpmiddleware.CondominiumMiddleware,
 	healthService input.HealthService,
 	condominiumService input.CondominiumService,
 	unitService input.UnitService,
@@ -40,19 +48,28 @@ func NewHTTPServer(
 	expenseService input.ExpenseService,
 	memberService input.MemberService,
 	userService input.UserService,
+	permissionService input.PermissionService,
+	roleService input.RoleService,
+	assignmentService input.AssignmentService,
+	tenantService input.TenantService,
 ) *HTTPServer {
 	return &HTTPServer{
-		port:               port,
-		authMiddleware:     authMiddleware,
-		homeHandler:        handlers.NewHomeHandler(),
-		healthHandler:      handlers.NewHealthHandler(healthService),
-		condominiumHandler: handlers.NewCondominiumHandler(condominiumService),
-		unitHandler:        handlers.NewUnitHandler(unitService),
-		unitGroupHandler:   handlers.NewUnitGroupHandler(unitGroupService),
-		chargeHandler:      handlers.NewChargeHandler(chargeService),
-		expenseHandler:     handlers.NewExpenseHandler(expenseService),
-		memberHandler:      handlers.NewMemberHandler(memberService),
-		userHandler:        handlers.NewUserHandler(userService),
+		port:                  port,
+		authMiddleware:        authMiddleware,
+		condominiumMiddleware: condominiumMiddleware,
+		homeHandler:           handlers.NewHomeHandler(),
+		healthHandler:         handlers.NewHealthHandler(healthService),
+		condominiumHandler:    handlers.NewCondominiumHandler(condominiumService),
+		unitHandler:           handlers.NewUnitHandler(unitService),
+		unitGroupHandler:      handlers.NewUnitGroupHandler(unitGroupService),
+		chargeHandler:         handlers.NewChargeHandler(chargeService),
+		expenseHandler:        handlers.NewExpenseHandler(expenseService),
+		memberHandler:         handlers.NewMemberHandler(memberService),
+		userHandler:           handlers.NewUserHandler(userService),
+		permissionHandler:     handlers.NewPermissionHandler(permissionService),
+		roleHandler:           handlers.NewRoleHandler(roleService),
+		assignmentHandler:     handlers.NewAssignmentHandler(assignmentService),
+		tenantHandler:         handlers.NewTenantHandler(tenantService),
 	}
 }
 
@@ -75,6 +92,36 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 		log.Printf("%s initialized successfully", svc.Name())
 	}
 
+	// Authorization/PAP repositories and use cases
+	permissionRepo := postgres.NewPermissionRepository(postgresAdapter.DB())
+	authzRoleRepo := postgres.NewAuthzRoleRepository(postgresAdapter.DB())
+	authzAssignmentRepo := postgres.NewAuthzAssignmentRepository(postgresAdapter.DB())
+	authzBundleRepo := postgres.NewAuthorizationBundleRepository(postgresAdapter.DB())
+	authzEngine, err := authz.NewEngine(context.Background(), "policies/authz.rego")
+	if err != nil {
+		_ = postgresAdapter.Close()
+		return nil, nil, fmt.Errorf("failed to create authorization engine: %w", err)
+	}
+	authzBundleUseCase := usecase.NewAuthorizationBundleUseCase(authzBundleRepo, authzEngine)
+	authorizer := authz.NewAuthorizer(authzEngine)
+	permissionUseCase := usecase.NewPermissionUseCase(permissionRepo, authzRoleRepo, authzBundleRepo, authzBundleUseCase)
+	roleUseCase := usecase.NewAuthzRoleUseCase(authzRoleRepo, permissionRepo, authzBundleUseCase)
+	assignmentUseCase := usecase.NewAuthzAssignmentUseCase(authzAssignmentRepo, authzRoleRepo, authzBundleUseCase)
+	tenantUseCase := usecase.NewTenantUseCase(authzRoleRepo, authzBundleUseCase)
+
+	if err := roleUseCase.EnsureSeedRoles(context.Background()); err != nil {
+		_ = postgresAdapter.Close()
+		return nil, nil, fmt.Errorf("failed to seed authorization roles: %w", err)
+	}
+	if err := permissionUseCase.EnsureSeedPermissions(context.Background()); err != nil {
+		_ = postgresAdapter.Close()
+		return nil, nil, fmt.Errorf("failed to seed authorization permissions: %w", err)
+	}
+	if err := authzBundleUseCase.Rebuild(context.Background()); err != nil {
+		_ = postgresAdapter.Close()
+		return nil, nil, fmt.Errorf("failed to refresh authorization bundle after seeding: %w", err)
+	}
+
 	// Health use case
 	healthUseCase := usecase.NewHealthUseCase(postgresAdapter)
 
@@ -89,6 +136,7 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 
 	// Condominium repository and use case
 	condoRepo := postgres.NewCondominiumRepository(postgresAdapter.DB())
+	condominiumGuard := authz.NewCondominiumGuard(authorizer, condoRepo)
 	condoUseCase := usecase.NewCondominiumUseCaseWithAuthAndCharges(condoRepo, authorizationRepo, chargeRepo)
 
 	// Unit repository and use case
@@ -99,11 +147,11 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 	unitGroupUseCase := usecase.NewUnitGroupUseCase(unitGroupRepo, unitRepo, authorizationRepo, condoRepo)
 
 	// Charge use case
-	chargeUseCase := usecase.NewChargeUseCase(chargeRepo, authorizationRepo, condoRepo)
+	chargeUseCase := usecase.NewChargeUseCase(chargeRepo, condoRepo, condominiumGuard)
 
 	// Expense repository and use case
 	expenseRepo := postgres.NewExpenseRepository(postgresAdapter.DB())
-	expenseUseCase := usecase.NewExpenseUseCase(expenseRepo, authorizationRepo, condoRepo)
+	expenseUseCase := usecase.NewExpenseUseCase(expenseRepo, condoRepo, condominiumGuard)
 
 	// User repository and use case
 	userRepo := postgres.NewUserRepository(postgresAdapter.DB())
@@ -118,10 +166,12 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 		_ = postgresAdapter.Close()
 		return nil, nil, fmt.Errorf("failed to create auth middleware: %w", err)
 	}
+	condominiumMiddleware := httpmiddleware.NewCondominiumMiddleware(condoRepo)
 
 	httpServer := NewHTTPServer(
 		port,
 		authMiddleware,
+		condominiumMiddleware,
 		healthUseCase,
 		condoUseCase,
 		unitUseCase,
@@ -130,6 +180,10 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 		expenseUseCase,
 		memberUseCase,
 		userUseCase,
+		permissionUseCase,
+		roleUseCase,
+		assignmentUseCase,
+		tenantUseCase,
 	)
 
 	return httpServer.Start(), postgresAdapter.Close, nil

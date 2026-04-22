@@ -40,7 +40,6 @@ services:
       start_period: 15s
     networks:
       - blueprint
-
 volumes:
   psql_volume_bp:
 networks:

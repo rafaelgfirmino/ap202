@@ -5,26 +5,31 @@ import (
 	"fmt"
 	"time"
 
+	"ap202/internal/authz"
 	"ap202/internal/domain"
 	"ap202/internal/ports/output"
 )
 
 type ChargeUseCase struct {
 	chargeRepo      output.ChargeRepository
-	authorizer      output.AssociationRepository
 	condominiumRepo output.CondominiumRepository
+	guard           authz.CondominiumAuthorizer
 }
 
-func NewChargeUseCase(chargeRepo output.ChargeRepository, authorizer output.AssociationRepository, condominiumRepo output.CondominiumRepository) *ChargeUseCase {
+func NewChargeUseCase(chargeRepo output.ChargeRepository, condominiumRepo output.CondominiumRepository, guard authz.CondominiumAuthorizer) *ChargeUseCase {
+	if guard == nil {
+		guard = authz.NewCondominiumGuard(nil, condominiumRepo)
+	}
+
 	return &ChargeUseCase{
 		chargeRepo:      chargeRepo,
-		authorizer:      authorizer,
 		condominiumRepo: condominiumRepo,
+		guard:           guard,
 	}
 }
 
 func (uc *ChargeUseCase) Create(ctx context.Context, personID int64, condominiumCode string, input domain.CreateChargeInput) (*domain.Charge, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	ctx, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:boleto:create")
 	if err != nil {
 		return nil, err
 	}
@@ -58,21 +63,4 @@ func (uc *ChargeUseCase) Create(ctx context.Context, personID int64, condominium
 	}
 
 	return charge, nil
-}
-
-func (uc *ChargeUseCase) authorize(ctx context.Context, personID int64, code string) (int64, error) {
-	condominiumID, err := uc.condominiumRepo.FindIDByCode(ctx, code)
-	if err != nil {
-		return 0, err
-	}
-
-	allowed, err := uc.authorizer.HasActiveManagerAssociation(ctx, personID, condominiumID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to check manager association: %w", err)
-	}
-	if !allowed {
-		return 0, domain.ErrForbidden
-	}
-
-	return condominiumID, nil
 }

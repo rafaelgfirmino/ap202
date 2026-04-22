@@ -9,6 +9,8 @@ import (
 
 	httpmiddleware "ap202/internal/adapters/input/http/middleware"
 	"ap202/internal/domain"
+
+	"github.com/google/uuid"
 )
 
 type mockHealthService struct{}
@@ -158,8 +160,92 @@ func (m *mockUserService) GetByID(_ context.Context, id int64) (*domain.User, er
 	return &domain.User{ID: id, FirstName: "Test", LastName: "User", Name: "Test User", Email: "test@example.com"}, nil
 }
 
+type mockPermissionService struct{}
+
+func (m *mockPermissionService) Create(_ context.Context, permission *domain.Permission) (*domain.Permission, error) {
+	return permission, nil
+}
+
+func (m *mockPermissionService) List(_ context.Context) ([]domain.Permission, error) {
+	return []domain.Permission{}, nil
+}
+
+func (m *mockPermissionService) GetByID(_ context.Context, id uuid.UUID) (*domain.Permission, error) {
+	return &domain.Permission{ID: id, Name: "test:resource:read"}, nil
+}
+
+func (m *mockPermissionService) Delete(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockPermissionService) Sync(_ context.Context, _ []domain.PermissionSyncItem) error {
+	return nil
+}
+
+type mockRoleService struct{}
+
+func (m *mockRoleService) Create(_ context.Context, role *domain.Role) (*domain.Role, error) {
+	return role, nil
+}
+
+func (m *mockRoleService) List(_ context.Context, _ *int64) ([]domain.Role, error) {
+	return []domain.Role{}, nil
+}
+
+func (m *mockRoleService) GetByID(_ context.Context, id uuid.UUID) (*domain.Role, error) {
+	return &domain.Role{ID: id, Name: "admin", Scope: "global"}, nil
+}
+
+func (m *mockRoleService) Delete(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockRoleService) AssignPermission(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockRoleService) RemovePermission(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+	return nil
+}
+
+type mockAssignmentService struct{}
+
+func (m *mockAssignmentService) Assign(_ context.Context, assignment *domain.UserRole) (*domain.UserRole, error) {
+	return assignment, nil
+}
+
+func (m *mockAssignmentService) Revoke(_ context.Context, _ int64, _ uuid.UUID, _ int64) error {
+	return nil
+}
+
+func (m *mockAssignmentService) ListByUser(_ context.Context, _ int64) ([]domain.UserRole, error) {
+	return []domain.UserRole{}, nil
+}
+
+type mockTenantService struct{}
+
+func (m *mockTenantService) Setup(_ context.Context, _ int64) ([]domain.Role, error) {
+	return []domain.Role{}, nil
+}
+
 func newTestServer() *HTTPServer {
-	return NewHTTPServer(8080, &httpmiddleware.AuthMiddleware{}, &mockHealthService{}, &mockCondominiumService{}, &mockUnitService{}, &mockUnitGroupService{}, &mockChargeService{}, &mockExpenseService{}, &mockMemberService{}, &mockUserService{})
+	return NewHTTPServer(
+		8080,
+		&httpmiddleware.AuthMiddleware{},
+		&httpmiddleware.CondominiumMiddleware{},
+		&mockHealthService{},
+		&mockCondominiumService{},
+		&mockUnitService{},
+		&mockUnitGroupService{},
+		&mockChargeService{},
+		&mockExpenseService{},
+		&mockMemberService{},
+		&mockUserService{},
+		&mockPermissionService{},
+		&mockRoleService{},
+		&mockAssignmentService{},
+		&mockTenantService{},
+	)
 }
 
 func TestHTTPServer_HelloWorldHandler(t *testing.T) {

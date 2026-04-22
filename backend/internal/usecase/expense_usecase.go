@@ -9,26 +9,31 @@ import (
 	"strings"
 	"time"
 
+	"ap202/internal/authz"
 	"ap202/internal/domain"
 	"ap202/internal/ports/output"
 )
 
 type ExpenseUseCase struct {
 	repo            output.ExpenseRepository
-	authorizer      output.AssociationRepository
 	condominiumRepo output.CondominiumRepository
+	guard           authz.CondominiumAuthorizer
 }
 
-func NewExpenseUseCase(repo output.ExpenseRepository, authorizer output.AssociationRepository, condominiumRepo output.CondominiumRepository) *ExpenseUseCase {
+func NewExpenseUseCase(repo output.ExpenseRepository, condominiumRepo output.CondominiumRepository, guard authz.CondominiumAuthorizer) *ExpenseUseCase {
+	if guard == nil {
+		guard = authz.NewCondominiumGuard(nil, condominiumRepo)
+	}
+
 	return &ExpenseUseCase{
 		repo:            repo,
-		authorizer:      authorizer,
 		condominiumRepo: condominiumRepo,
+		guard:           guard,
 	}
 }
 
 func (uc *ExpenseUseCase) CreateExpense(ctx context.Context, personID int64, condominiumCode string, input domain.CreateExpenseInput) (*domain.Expense, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:taxa:update")
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +97,8 @@ func (uc *ExpenseUseCase) CreateExpense(ctx context.Context, personID int64, con
 }
 
 func (uc *ExpenseUseCase) ListExpenses(ctx context.Context, personID int64, condominiumCode string, month string, scope string) ([]domain.Expense, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_ = personID
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:boleto:read")
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +119,7 @@ func (uc *ExpenseUseCase) ListExpenses(ctx context.Context, personID int64, cond
 }
 
 func (uc *ExpenseUseCase) ReverseExpense(ctx context.Context, personID int64, condominiumCode string, expenseID int64) (*domain.Expense, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:taxa:update")
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +159,8 @@ func (uc *ExpenseUseCase) ReverseExpense(ctx context.Context, personID int64, co
 }
 
 func (uc *ExpenseUseCase) GetClosingPreview(ctx context.Context, personID int64, condominiumCode string, month string) (*domain.ClosingPreview, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_ = personID
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:boleto:read")
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +172,7 @@ func (uc *ExpenseUseCase) GetClosingPreview(ctx context.Context, personID int64,
 }
 
 func (uc *ExpenseUseCase) CloseMonth(ctx context.Context, personID int64, condominiumCode string, input domain.CloseMonthInput) (*domain.ClosingPreview, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:taxa:update")
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +214,8 @@ func (uc *ExpenseUseCase) CloseMonth(ctx context.Context, personID int64, condom
 }
 
 func (uc *ExpenseUseCase) ReopenMonth(ctx context.Context, personID int64, condominiumCode string, month string) error {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_ = personID
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:taxa:update")
 	if err != nil {
 		return err
 	}
@@ -236,7 +244,8 @@ func (uc *ExpenseUseCase) ReopenMonth(ctx context.Context, personID int64, condo
 }
 
 func (uc *ExpenseUseCase) GetReserveFundSetting(ctx context.Context, personID int64, condominiumCode string) (*domain.ReserveFundSetting, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_ = personID
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:boleto:read")
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +265,7 @@ func (uc *ExpenseUseCase) GetReserveFundSetting(ctx context.Context, personID in
 }
 
 func (uc *ExpenseUseCase) UpdateReserveFundSetting(ctx context.Context, personID int64, condominiumCode string, input domain.UpdateReserveFundInput) (*domain.ReserveFundSetting, error) {
-	condominiumID, err := uc.authorize(ctx, personID, condominiumCode)
+	_, condominiumID, err := uc.guard.Authorize(ctx, condominiumCode, "financeiro-svc:taxa:update")
 	if err != nil {
 		return nil, err
 	}
@@ -452,21 +461,6 @@ func (uc *ExpenseUseCase) buildPreview(ctx context.Context, condominiumID int64,
 		ReserveFundTotal:   reserveTotal,
 		Items:              items,
 	}, nil
-}
-
-func (uc *ExpenseUseCase) authorize(ctx context.Context, personID int64, code string) (int64, error) {
-	condominiumID, err := uc.condominiumRepo.FindIDByCode(ctx, code)
-	if err != nil {
-		return 0, err
-	}
-	allowed, err := uc.authorizer.HasActiveManagerAssociation(ctx, personID, condominiumID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to check manager association: %w", err)
-	}
-	if !allowed {
-		return 0, domain.ErrForbidden
-	}
-	return condominiumID, nil
 }
 
 func parseReferenceMonth(month string) (time.Time, error) {
