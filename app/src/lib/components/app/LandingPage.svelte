@@ -54,7 +54,7 @@
 	}
 
 	const whatsappContactHref =
-		'https://wa.me/5511999999999?text=Ol%C3%A1%21%20Quero%20conhecer%20o%20AP202%20para%20meu%20condom%C3%ADnio.';
+		'https://wa.me/5531996767346?text=Ol%C3%A1%21%20Quero%20conhecer%20o%20AP202%20para%20meu%20condom%C3%ADnio.';
 	const entryHref = '/entrar';
 
 	const heroMetrics: Array<{ label: string; value: string }> = [
@@ -2230,13 +2230,6 @@
 						data-test="landing-final-cta-actions"
 						class="mt-8 flex flex-col justify-center gap-3 sm:flex-row"
 					>
-						<Button
-							id="landing-final-cta-primary"
-							class="h-12 rounded-full bg-background px-7 text-base text-foreground hover:bg-background/90"
-							href={entryHref}
-						>
-							Testar o AP202
-						</Button>
 						<Button
 							id="landing-final-cta-whatsapp"
 							class="h-12 rounded-full border-white/40 bg-transparent px-7 text-base text-white hover:bg-white/10"

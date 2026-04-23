@@ -18,7 +18,7 @@
 	} from '$lib/services/auth.js';
 
 	const createAccountHref =
-		'https://wa.me/5511999999999?text=Ol%C3%A1%21%20Quero%20criar%20uma%20conta%20no%20AP202.';
+		'https://wa.me/5531996767346?text=Ol%C3%A1%21%20Quero%20criar%20uma%20conta%20no%20AP202.';
 
 	let isLoading = $state(true);
 	let errorMessage = $state('');
