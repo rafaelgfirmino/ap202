@@ -58,3 +58,33 @@ Exemplo de uso:
 ```svelte
 <UserActivityTable rows={audit} />
 ```
+
+## `LandingPage.svelte`
+
+Renderiza a landing page pública do AP202 com hero, dores, solução, benefícios, funcionalidades, preços transparentes, FAQ e CTA final. O mockup do painel no hero adapta o grid e os cards para evitar compressão e cortes em larguras intermediárias.
+
+Exemplo de uso:
+
+```svelte
+<LandingPage />
+```
+
+## `EntryHub.svelte`
+
+Renderiza a página pública de entrada do AP202, redirecionando para login quando necessário e listando os condomínios disponíveis para a conta autenticada.
+
+Exemplo de uso:
+
+```svelte
+<EntryHub />
+```
+
+## `CreateCondominiumWizard.svelte`
+
+Renderiza a experiência guiada de criação de condomínio em etapas, conectando o frontend ao endpoint real de cadastro. O formulário usa validação com Formsnap, Superforms e Zod, orienta o preenchimento do telefone do condomínio, do síndico ou do responsável, explica a área total do terreno em m² e prioriza o CEP para autopreencher o endereço com seleção de UF.
+
+Exemplo de uso:
+
+```svelte
+<CreateCondominiumWizard onCreated={handleCreated} />
+```

@@ -47,6 +47,18 @@ func (m *mockCondominiumService) GetCondominiumByCode(_ context.Context, _ int64
 	return &domain.Condominium{ID: 1, Code: code, Name: "Test"}, nil
 }
 
+type mockAddressService struct{}
+
+func (m *mockAddressService) LookupAddressByZipCode(_ context.Context, zipCode string) (*domain.ZipCodeAddress, error) {
+	return &domain.ZipCodeAddress{
+		ZipCode:      zipCode,
+		Street:       "Praça da Sé",
+		Neighborhood: "Sé",
+		City:         "São Paulo",
+		State:        "SP",
+	}, nil
+}
+
 func (m *mockCondominiumService) UpdateFeeRule(_ context.Context, _ int64, code string, feeRule domain.FeeRule) (*domain.Condominium, error) {
 	return &domain.Condominium{ID: 1, Code: code, Name: "Test", FeeRule: feeRule}, nil
 }
@@ -234,6 +246,7 @@ func newTestServer() *HTTPServer {
 		&httpmiddleware.AuthMiddleware{},
 		&httpmiddleware.CondominiumMiddleware{},
 		&mockHealthService{},
+		&mockAddressService{},
 		&mockCondominiumService{},
 		&mockUnitService{},
 		&mockUnitGroupService{},

@@ -1,3 +1,7 @@
+-- +goose Up
+-- +goose StatementBegin
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS condominiums (
     id BIGSERIAL PRIMARY KEY,
     code CHAR(7) NOT NULL UNIQUE,
@@ -44,23 +48,6 @@ CREATE TABLE IF NOT EXISTS users (
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS association (
-    id BIGSERIAL PRIMARY KEY,
-    person_id BIGINT NOT NULL REFERENCES users(id),
-    condominium_id BIGINT NOT NULL REFERENCES condominiums(id),
-    unit_id BIGINT REFERENCES units(id) ON DELETE CASCADE,
-    role VARCHAR(30) NOT NULL CHECK (role IN (
-        'manager',
-        'administrator',
-        'owner',
-        'tenant'
-    )),
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    start_date DATE NOT NULL,
-    end_date DATE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS units (
     id BIGSERIAL PRIMARY KEY,
     condominium_id BIGINT NOT NULL REFERENCES condominiums(id),
@@ -85,16 +72,22 @@ CREATE TABLE IF NOT EXISTS units (
     )
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_units_code ON units (code);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_units_condominium_group_name_identifier ON units (condominium_id, COALESCE(group_name, ''), identifier);
-CREATE INDEX IF NOT EXISTS idx_units_condominium ON units (condominium_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_users_external_auth_id ON users (external_auth_id) WHERE external_auth_id IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (email);
-CREATE INDEX IF NOT EXISTS idx_association_person ON association (person_id);
-CREATE INDEX IF NOT EXISTS idx_association_condominium ON association (condominium_id);
-CREATE INDEX IF NOT EXISTS idx_association_unit ON association (unit_id);
-CREATE INDEX IF NOT EXISTS idx_association_unit_role_active ON association (unit_id, role, active);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_association_active_unique_link ON association (person_id, condominium_id, COALESCE(unit_id, -1), role) WHERE active = TRUE;
+CREATE TABLE IF NOT EXISTS association (
+    id BIGSERIAL PRIMARY KEY,
+    person_id BIGINT NOT NULL REFERENCES users(id),
+    condominium_id BIGINT NOT NULL REFERENCES condominiums(id),
+    unit_id BIGINT REFERENCES units(id) ON DELETE CASCADE,
+    role VARCHAR(30) NOT NULL CHECK (role IN (
+        'manager',
+        'administrator',
+        'owner',
+        'tenant'
+    )),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    start_date DATE NOT NULL,
+    end_date DATE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 CREATE TABLE IF NOT EXISTS charges (
     id BIGSERIAL PRIMARY KEY,
@@ -106,9 +99,6 @@ CREATE TABLE IF NOT EXISTS charges (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_charges_condominium_id ON charges (condominium_id);
-CREATE INDEX IF NOT EXISTS idx_charges_created_by ON charges (created_by);
-
 CREATE TABLE IF NOT EXISTS unit_charges (
     id BIGSERIAL PRIMARY KEY,
     charge_id BIGINT NOT NULL REFERENCES charges(id) ON DELETE CASCADE,
@@ -117,9 +107,6 @@ CREATE TABLE IF NOT EXISTS unit_charges (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (charge_id, unit_id)
 );
-
-CREATE INDEX IF NOT EXISTS idx_unit_charges_charge_id ON unit_charges (charge_id);
-CREATE INDEX IF NOT EXISTS idx_unit_charges_unit_id ON unit_charges (unit_id);
 
 CREATE TABLE IF NOT EXISTS condominium_unit_groups (
     id BIGSERIAL PRIMARY KEY,
@@ -131,9 +118,6 @@ CREATE TABLE IF NOT EXISTS condominium_unit_groups (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (condominium_id, group_type, name)
 );
-
-CREATE INDEX IF NOT EXISTS idx_condominium_unit_groups_condominium_id
-    ON condominium_unit_groups (condominium_id);
 
 CREATE TABLE IF NOT EXISTS accounts (
     id BIGSERIAL PRIMARY KEY,
@@ -162,8 +146,6 @@ CREATE TABLE IF NOT EXISTS cash_entries (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_cash_entries_condominium_month ON cash_entries (condominium_id, reference_month);
-
 CREATE TABLE IF NOT EXISTS expenses (
     id BIGSERIAL PRIMARY KEY,
     condominium_id BIGINT NOT NULL REFERENCES condominiums(id),
@@ -182,8 +164,6 @@ CREATE TABLE IF NOT EXISTS expenses (
     created_by BIGINT NOT NULL REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_expenses_condominium_month ON expenses (condominium_id, reference_month);
 
 CREATE TABLE IF NOT EXISTS reserve_fund_settings (
     id BIGSERIAL PRIMARY KEY,
@@ -281,11 +261,31 @@ CREATE TABLE IF NOT EXISTS pending_role_permissions (
     PRIMARY KEY (permission_name, role_name)
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_condominiums_code ON condominiums(code);
 CREATE INDEX IF NOT EXISTS idx_condominium_cnpjs_condominium_id ON condominium_cnpjs(condominium_id);
 CREATE INDEX IF NOT EXISTS idx_condominium_cnpjs_cnpj ON condominium_cnpjs(cnpj);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_condominium_cnpjs_principal_ativo
     ON condominium_cnpjs (condominium_id)
     WHERE principal = true AND ativo = true;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_external_auth_id ON users (external_auth_id) WHERE external_auth_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (email);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_units_code ON units (code);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_units_condominium_group_name_identifier ON units (condominium_id, COALESCE(group_name, ''), identifier);
+CREATE INDEX IF NOT EXISTS idx_units_condominium ON units (condominium_id);
+CREATE INDEX IF NOT EXISTS idx_association_person ON association (person_id);
+CREATE INDEX IF NOT EXISTS idx_association_condominium ON association (condominium_id);
+CREATE INDEX IF NOT EXISTS idx_association_unit ON association (unit_id);
+CREATE INDEX IF NOT EXISTS idx_association_unit_role_active ON association (unit_id, role, active);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_association_active_unique_link
+    ON association (person_id, condominium_id, COALESCE(unit_id, -1), role)
+    WHERE active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_charges_condominium_id ON charges (condominium_id);
+CREATE INDEX IF NOT EXISTS idx_charges_created_by ON charges (created_by);
+CREATE INDEX IF NOT EXISTS idx_unit_charges_charge_id ON unit_charges (charge_id);
+CREATE INDEX IF NOT EXISTS idx_unit_charges_unit_id ON unit_charges (unit_id);
+CREATE INDEX IF NOT EXISTS idx_condominium_unit_groups_condominium_id ON condominium_unit_groups (condominium_id);
+CREATE INDEX IF NOT EXISTS idx_cash_entries_condominium_month ON cash_entries (condominium_id, reference_month);
+CREATE INDEX IF NOT EXISTS idx_expenses_condominium_month ON expenses (condominium_id, reference_month);
 CREATE UNIQUE INDEX IF NOT EXISTS permissions_microservice_resource_action_uidx
     ON permissions (microservice, resource, action);
 CREATE UNIQUE INDEX IF NOT EXISTS permissions_name_uidx
@@ -315,3 +315,29 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE TRIGGER trg_users_atualizado_em
     BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION fn_set_atualizado_em();
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TRIGGER IF EXISTS trg_users_atualizado_em ON users;
+DROP FUNCTION IF EXISTS fn_set_atualizado_em();
+DROP TABLE IF EXISTS pending_role_permissions;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS permissions;
+DROP TABLE IF EXISTS monthly_unit_charges CASCADE;
+DROP TABLE IF EXISTS monthly_closings CASCADE;
+DROP TABLE IF EXISTS reserve_fund_settings CASCADE;
+DROP TABLE IF EXISTS expenses CASCADE;
+DROP TABLE IF EXISTS cash_entries CASCADE;
+DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS condominium_unit_groups CASCADE;
+DROP TABLE IF EXISTS unit_charges CASCADE;
+DROP TABLE IF EXISTS charges CASCADE;
+DROP TABLE IF EXISTS association CASCADE;
+DROP TABLE IF EXISTS units CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS condominium_cnpjs CASCADE;
+DROP TABLE IF EXISTS condominiums CASCADE;
+-- +goose StatementEnd

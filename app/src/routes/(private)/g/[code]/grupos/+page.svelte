@@ -49,6 +49,9 @@
 		{ value: 'sector', label: 'Setor', description: 'Organiza conjuntos por setores internos.' },
 		{ value: 'court', label: 'Quadra', description: 'Agrupa casas ou lotes por quadras.' }
 	];
+	const blockCodeOptions = Array.from({ length: 26 }, (_, index) =>
+		String.fromCharCode(65 + index)
+	);
 
 	let { params }: Props = $props();
 
@@ -539,12 +542,12 @@
 								<div
 									id={`group-registration-item-metadata-${group.id}`}
 									data-test={`group-registration-item-metadata-${group.id}`}
-									class="grid grid-cols-3 gap-3 text-sm"
+									class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3"
 								>
 									<div
 										id={`group-registration-item-floors-wrapper-${group.id}`}
 										data-test={`group-registration-item-floors-wrapper-${group.id}`}
-										class="flex flex-col gap-1"
+										class="flex min-w-0 flex-col gap-1"
 									>
 										<span
 											id={`group-registration-item-floors-label-${group.id}`}
@@ -564,7 +567,7 @@
 									<div
 										id={`group-registration-item-units-wrapper-${group.id}`}
 										data-test={`group-registration-item-units-wrapper-${group.id}`}
-										class="flex flex-col gap-1"
+										class="flex min-w-0 flex-col gap-1"
 									>
 										<span
 											id={`group-registration-item-units-label-${group.id}`}
@@ -584,19 +587,19 @@
 									<div
 										id={`group-registration-item-id-wrapper-${group.id}`}
 										data-test={`group-registration-item-id-wrapper-${group.id}`}
-										class="flex flex-col gap-1"
+										class="col-span-2 flex min-w-0 flex-col gap-1 sm:col-span-1"
 									>
 										<span
 											id={`group-registration-item-id-label-${group.id}`}
 											data-test={`group-registration-item-id-label-${group.id}`}
-											class="text-xs uppercase tracking-[0.08em] text-muted-foreground"
+											class="break-words text-xs uppercase tracking-[0.08em] text-muted-foreground"
 										>
-											Identificador
+											Id
 										</span>
 										<strong
 											id={`group-registration-item-id-value-${group.id}`}
 											data-test={`group-registration-item-id-value-${group.id}`}
-											class="text-sm text-foreground"
+											class="break-words text-sm text-foreground"
 										>
 											#{group.id}
 										</strong>
@@ -754,19 +757,51 @@
 						>
 							{nameFieldLabel}
 						</Label>
-						<Input
-							id="group-registration-name-input"
-							data-test="group-registration-name-input"
-							name="name"
-							maxlength={isBlockType ? 1 : 20}
-							placeholder={nameFieldPlaceholder}
-							value={groupName}
-							disabled={formMode === 'edit' && !selectedGroupCanManage}
-							oninput={(event) => {
-								const target = event.currentTarget as HTMLInputElement;
-								groupName = normalizeGroupName(target.value, selectedGroupType);
-							}}
-						/>
+						{#if isBlockType}
+							<select
+								id="group-registration-name-input"
+								data-test="group-registration-name-input"
+								name="name"
+								class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+								value={groupName}
+								disabled={formMode === 'edit' && !selectedGroupCanManage}
+								onchange={(event) => {
+									const target = event.currentTarget as HTMLSelectElement;
+									groupName = normalizeGroupName(target.value, selectedGroupType);
+								}}
+							>
+								<option
+									id="group-registration-name-option-empty"
+									data-test="group-registration-name-option-empty"
+									value=""
+								>
+									Selecione um bloco
+								</option>
+								{#each blockCodeOptions as blockCode}
+									<option
+										id={`group-registration-name-option-${blockCode}`}
+										data-test={`group-registration-name-option-${blockCode}`}
+										value={blockCode}
+									>
+										{blockCode}
+									</option>
+								{/each}
+							</select>
+						{:else}
+							<Input
+								id="group-registration-name-input"
+								data-test="group-registration-name-input"
+								name="name"
+								maxlength={20}
+								placeholder={nameFieldPlaceholder}
+								value={groupName}
+								disabled={formMode === 'edit' && !selectedGroupCanManage}
+								oninput={(event) => {
+									const target = event.currentTarget as HTMLInputElement;
+									groupName = normalizeGroupName(target.value, selectedGroupType);
+								}}
+							/>
+						{/if}
 						<span
 							id="group-registration-name-helper"
 							data-test="group-registration-name-helper"

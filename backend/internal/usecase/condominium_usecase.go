@@ -255,10 +255,14 @@ func (uc *CondominiumUseCase) generateUniqueCode(ctx context.Context) (string, e
 }
 
 func cleanCNPJ(cnpj string) string {
+	return cleanDigits(cnpj)
+}
+
+func cleanDigits(value string) string {
 	result := make([]byte, 0, 14)
-	for i := 0; i < len(cnpj); i++ {
-		if cnpj[i] >= '0' && cnpj[i] <= '9' {
-			result = append(result, cnpj[i])
+	for i := 0; i < len(value); i++ {
+		if value[i] >= '0' && value[i] <= '9' {
+			result = append(result, value[i])
 		}
 	}
 	return string(result)

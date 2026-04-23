@@ -11,6 +11,7 @@ func (s *HTTPServer) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
 	s.registerPublicRoutes(mux)
+	s.registerAddressRoutes(mux)
 	s.registerCondominiumRoutes(mux)
 	s.registerUnitGroupRoutes(mux)
 	s.registerUnitRoutes(mux)
@@ -38,6 +39,10 @@ func (s *HTTPServer) registerCondominiumRoutes(mux *http.ServeMux) {
 	mux.Handle("PATCH /api/v1/condominiums/{code}/fee-rule", s.requireCondominiumAuth(s.condominiumHandler.UpdateFeeRule))
 	mux.Handle("PATCH /api/v1/condominiums/{code}/land-area", s.requireCondominiumAuth(s.condominiumHandler.UpdateLandArea))
 	mux.Handle("GET /api/v1/me/condominiums", s.requireAuth(s.condominiumHandler.ListMine))
+}
+
+func (s *HTTPServer) registerAddressRoutes(mux *http.ServeMux) {
+	mux.Handle("GET /api/v1/address/zip-code/{zipCode}", s.requireAuth(s.addressHandler.LookupByZipCode))
 }
 
 // registerUnitGroupRoutes registra operacoes autenticadas de grupos de unidades.

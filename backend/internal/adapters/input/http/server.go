@@ -10,6 +10,7 @@ import (
 	"ap202/internal/adapters/input/http/handlers"
 	httpmiddleware "ap202/internal/adapters/input/http/middleware"
 	"ap202/internal/adapters/output/postgres"
+	"ap202/internal/adapters/output/viacep"
 	"ap202/internal/authz"
 	"ap202/internal/ports"
 	"ap202/internal/ports/input"
@@ -23,6 +24,7 @@ type HTTPServer struct {
 	condominiumMiddleware *httpmiddleware.CondominiumMiddleware
 	homeHandler           *handlers.HomeHandler
 	healthHandler         *handlers.HealthHandler
+	addressHandler        *handlers.AddressHandler
 	condominiumHandler    *handlers.CondominiumHandler
 	unitHandler           *handlers.UnitHandler
 	unitGroupHandler      *handlers.UnitGroupHandler
@@ -41,6 +43,7 @@ func NewHTTPServer(
 	authMiddleware *httpmiddleware.AuthMiddleware,
 	condominiumMiddleware *httpmiddleware.CondominiumMiddleware,
 	healthService input.HealthService,
+	addressService input.AddressService,
 	condominiumService input.CondominiumService,
 	unitService input.UnitService,
 	unitGroupService input.UnitGroupService,
@@ -59,6 +62,7 @@ func NewHTTPServer(
 		condominiumMiddleware: condominiumMiddleware,
 		homeHandler:           handlers.NewHomeHandler(),
 		healthHandler:         handlers.NewHealthHandler(healthService),
+		addressHandler:        handlers.NewAddressHandler(addressService),
 		condominiumHandler:    handlers.NewCondominiumHandler(condominiumService),
 		unitHandler:           handlers.NewUnitHandler(unitService),
 		unitGroupHandler:      handlers.NewUnitGroupHandler(unitGroupService),
@@ -137,6 +141,8 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 	// Condominium repository and use case
 	condoRepo := postgres.NewCondominiumRepository(postgresAdapter.DB())
 	condominiumGuard := authz.NewCondominiumGuard(authorizer, condoRepo)
+	zipCodeLookupClient := viacep.NewZipCodeLookupClient(&http.Client{Timeout: 5 * time.Second})
+	addressUseCase := usecase.NewAddressUseCase(zipCodeLookupClient)
 	condoUseCase := usecase.NewCondominiumUseCaseWithAuthAndCharges(condoRepo, authorizationRepo, chargeRepo)
 
 	// Unit repository and use case
@@ -173,6 +179,7 @@ func NewServer(port int, dbConfig output.DatabaseConfig) (*http.Server, func() e
 		authMiddleware,
 		condominiumMiddleware,
 		healthUseCase,
+		addressUseCase,
 		condoUseCase,
 		unitUseCase,
 		unitGroupUseCase,

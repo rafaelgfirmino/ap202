@@ -16,6 +16,26 @@ export interface UserCondominium {
 	name: string;
 }
 
+export interface CreateCondominiumInput {
+	name: string;
+	phone: string;
+	email: string;
+	landArea?: number | null;
+	address: {
+		street: string;
+		number: string;
+		neighborhood: string;
+		city: string;
+		state: string;
+		zip_code: string;
+	};
+	cnpj: {
+		cnpj: string;
+		razao_social: string;
+		descricao?: string;
+	};
+}
+
 interface ApiErrorResponse {
 	error?: string;
 	message?: string;
@@ -81,6 +101,42 @@ export async function listMyCondominiums(): Promise<UserCondominium[]> {
 	});
 
 	return parseAuthenticatedResponse<UserCondominium[]>(response);
+}
+
+export async function createCondominium(input: CreateCondominiumInput): Promise<UserCondominium> {
+	const token = await getAccessToken();
+	const response = await fetch('/condominiums', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		},
+		body: JSON.stringify({
+			name: input.name,
+			phone: input.phone,
+			email: input.email,
+			land_area: input.landArea ?? null,
+			address: {
+				street: input.address.street,
+				number: input.address.number,
+				neighborhood: input.address.neighborhood,
+				city: input.address.city,
+				state: input.address.state,
+				zip_code: input.address.zip_code
+			},
+			cnpjs: [
+				{
+					cnpj: input.cnpj.cnpj,
+					razao_social: input.cnpj.razao_social,
+					descricao: input.cnpj.descricao ?? '',
+					principal: true,
+					ativo: true
+				}
+			]
+		})
+	});
+
+	return parseAuthenticatedResponse<UserCondominium>(response);
 }
 
 /**
