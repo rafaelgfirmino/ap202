@@ -7,15 +7,71 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Logo from '$lib/components/app/logo/index.svelte';
 	import { getInitialRoute } from '$lib/services/auth.js';
-	import { getClerk, getClerkErrorMessage, signInWithPassword } from '$lib/services/clerk.js';
+	import {
+		getClerk,
+		getClerkErrorMessage,
+		getPendingSecondFactorState,
+		selectSecondFactor,
+		signInWithPassword,
+		type SecondFactorOption,
+		type SecondFactorStrategy,
+		verifySecondFactor
+	} from '$lib/services/clerk.js';
 	import Building2Icon from '@lucide/svelte/icons/building-2';
 	import CarFrontIcon from '@lucide/svelte/icons/car-front';
 	import HouseIcon from '@lucide/svelte/icons/house';
 
 	let email = $state('');
 	let password = $state('');
+	let verificationCode = $state('');
 	let errorMessage = $state('');
 	let isLoading = $state(false);
+	let loginStep = $state<'password' | 'second-factor'>('password');
+	let secondFactorOptions = $state<SecondFactorOption[]>([]);
+	let selectedSecondFactorStrategy = $state<SecondFactorStrategy>('email_code');
+
+	const activeSecondFactor = $derived(
+		secondFactorOptions.find((option) => option.strategy === selectedSecondFactorStrategy) ?? null
+	);
+	const secondFactorTitle = $derived.by(() => {
+		if (!activeSecondFactor) {
+			return 'Verificação adicional';
+		}
+
+		return activeSecondFactor.label;
+	});
+	const secondFactorDescription = $derived.by(() => {
+		if (!activeSecondFactor) {
+			return 'Confirme a autenticação para concluir o acesso.';
+		}
+
+		return activeSecondFactor.description;
+	});
+	const secondFactorPlaceholder = $derived.by(() => {
+		if (selectedSecondFactorStrategy === 'backup_code') {
+			return 'Informe o código de backup';
+		}
+
+		if (selectedSecondFactorStrategy === 'totp') {
+			return 'Informe o código do autenticador';
+		}
+
+		return 'Informe o código recebido';
+	});
+	const secondFactorButtonLabel = $derived.by(() => {
+		if (isLoading) {
+			return 'Validando...';
+		}
+
+		return 'Confirmar código';
+	});
+
+	function setSecondFactorState(options: SecondFactorOption[], strategy: SecondFactorStrategy): void {
+		secondFactorOptions = options;
+		selectedSecondFactorStrategy = strategy;
+		loginStep = 'second-factor';
+		verificationCode = '';
+	}
 
 	async function redirectToInitialPage(): Promise<void> {
 		await goto(await getInitialRoute());
@@ -27,6 +83,13 @@
 
 			if (clerk.isSignedIn) {
 				await redirectToInitialPage();
+				return;
+			}
+
+			if (clerk.client?.signIn?.status === 'needs_second_factor') {
+				const pendingState = await getPendingSecondFactorState();
+
+				setSecondFactorState(pendingState.options, pendingState.selectedStrategy);
 			}
 		} catch (error) {
 			errorMessage = getClerkErrorMessage(error);
@@ -46,8 +109,14 @@
 				return;
 			}
 
-			await signInWithPassword({ email, password });
-			await redirectToInitialPage();
+			const result = await signInWithPassword({ email, password });
+
+			if (result.status === 'complete') {
+				await redirectToInitialPage();
+				return;
+			}
+
+			setSecondFactorState(result.options, result.selectedStrategy);
 		} catch (error) {
 			const message = getClerkErrorMessage(error);
 
@@ -61,11 +130,52 @@
 			isLoading = false;
 		}
 	}
-</script>
 
-<svelte:head>
-	<title>Login | AP202</title>
-</svelte:head>
+	async function handleSecondFactorSelection(strategy: SecondFactorStrategy): Promise<void> {
+		errorMessage = '';
+		isLoading = true;
+
+		try {
+			const result = await selectSecondFactor(strategy);
+			setSecondFactorState(result.options, result.selectedStrategy);
+		} catch (error) {
+			errorMessage = getClerkErrorMessage(error);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	async function handleSecondFactorSubmit(event: SubmitEvent): Promise<void> {
+		event.preventDefault();
+		errorMessage = '';
+		isLoading = true;
+
+		try {
+			const result = await verifySecondFactor({
+				strategy: selectedSecondFactorStrategy,
+				code: verificationCode
+			});
+
+			if (result.status === 'complete') {
+				await redirectToInitialPage();
+				return;
+			}
+
+			setSecondFactorState(result.options, result.selectedStrategy);
+		} catch (error) {
+			errorMessage = getClerkErrorMessage(error);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	function handleBackToPassword(): void {
+		loginStep = 'password';
+		secondFactorOptions = [];
+		verificationCode = '';
+		errorMessage = '';
+	}
+</script>
 
 <main
 	id="security-login-page"
@@ -97,56 +207,139 @@
 						id="security-login-title"
 						class="text-foreground text-5xl font-semibold text-center tracking-tight"
 					>
-						Entrar
+						{loginStep === 'password' ? 'Entrar' : secondFactorTitle}
 					</Card.Title>
+					<Card.Description
+						id="security-login-description"
+						class="text-center text-sm leading-relaxed"
+					>
+						{#if loginStep === 'password'}
+							Entre com seu email e senha para acessar o AP202.
+						{:else}
+							{secondFactorDescription}
+						{/if}
+					</Card.Description>
 				</Card.Header>
 
 				<Card.Content id="security-login-form-content" class="px-0">
-					<form id="security-login-form" class="space-y-5" onsubmit={handleSubmit}>
-						<div id="security-login-email-field" class="space-y-2">
-							<Label id="security-login-email-label" for="security-login-email-input">Email</Label>
-							<Input
-								id="security-login-email-input"
-								type="email"
-								placeholder="admin@ap202.com"
-								autocomplete="email"
-								bind:value={email}
-								required
-							/>
-						</div>
+					{#if loginStep === 'password'}
+						<form id="security-login-form" class="space-y-5" onsubmit={handleSubmit}>
+							<div id="security-login-email-field" class="space-y-2">
+								<Label id="security-login-email-label" for="security-login-email-input">Email</Label>
+								<Input
+									id="security-login-email-input"
+									type="email"
+									placeholder="admin@ap202.com"
+									autocomplete="email"
+									bind:value={email}
+									required
+								/>
+							</div>
 
-						<div id="security-login-password-field" class="space-y-2">
-							<Label id="security-login-password-label" for="security-login-password-input">
-								Password
-							</Label>
-							<Input
-								id="security-login-password-input"
-								type="password"
-								placeholder="••••••"
-								autocomplete="current-password"
-								bind:value={password}
-								required
-							/>
-						</div>
+							<div id="security-login-password-field" class="space-y-2">
+								<Label id="security-login-password-label" for="security-login-password-input">
+									Password
+								</Label>
+								<Input
+									id="security-login-password-input"
+									type="password"
+									placeholder="••••••"
+									autocomplete="current-password"
+									bind:value={password}
+									required
+								/>
+							</div>
 
-						{#if errorMessage}
-							<p
-								id="security-login-error-message"
-								class="text-destructive border border-current px-4 py-2 text-xs"
+							{#if errorMessage}
+								<p
+									id="security-login-error-message"
+									class="text-destructive border border-current px-4 py-2 text-xs"
+								>
+									{errorMessage}
+								</p>
+							{/if}
+
+							<Button
+								id="security-login-submit-button"
+								type="submit"
+								disabled={isLoading}
+								class="h-12 w-full text-sm"
 							>
-								{errorMessage}
-							</p>
-						{/if}
+								{isLoading ? 'Entrando...' : 'Entrar'}
+							</Button>
+						</form>
+					{:else}
+						<div id="security-login-second-factor" class="space-y-5">
+							<div id="security-login-factor-options" class="grid gap-2">
+								{#each secondFactorOptions as option}
+									<Button
+										id={`security-login-factor-option-${option.strategy}`}
+										type="button"
+										variant={selectedSecondFactorStrategy === option.strategy ? 'default' : 'outline'}
+										class="h-auto justify-start px-4 py-3 text-left"
+										disabled={isLoading}
+										onclick={() => handleSecondFactorSelection(option.strategy)}
+									>
+										<span class="flex flex-col items-start gap-1">
+											<span class="text-sm font-medium">{option.label}</span>
+											<span class="text-xs opacity-80">{option.description}</span>
+										</span>
+									</Button>
+								{/each}
+							</div>
 
-						<Button
-							id="security-login-submit-button"
-							type="submit"
-							disabled={isLoading}
-							class="h-12 w-full text-sm"
-						>
-							{isLoading ? 'Entrando...' : 'Entrar'}
-						</Button>
-					</form>
+							<form
+								id="security-login-second-factor-form"
+								class="space-y-5"
+								onsubmit={handleSecondFactorSubmit}
+							>
+								<div id="security-login-code-field" class="space-y-2">
+									<Label id="security-login-code-label" for="security-login-code-input">
+										Código de verificação
+									</Label>
+									<Input
+										id="security-login-code-input"
+										type="text"
+										placeholder={secondFactorPlaceholder}
+										autocomplete="one-time-code"
+										bind:value={verificationCode}
+										required
+									/>
+								</div>
+
+								{#if errorMessage}
+									<p
+										id="security-login-error-message"
+										class="text-destructive border border-current px-4 py-2 text-xs"
+									>
+										{errorMessage}
+									</p>
+								{/if}
+
+								<div id="security-login-second-factor-actions" class="grid gap-3 sm:grid-cols-2">
+									<Button
+										id="security-login-confirm-second-factor-button"
+										type="submit"
+										disabled={isLoading}
+										class="h-12 w-full text-sm"
+									>
+										{secondFactorButtonLabel}
+									</Button>
+
+									<Button
+										id="security-login-back-button"
+										type="button"
+										variant="outline"
+										disabled={isLoading}
+										class="h-12 w-full text-sm"
+										onclick={handleBackToPassword}
+									>
+										Voltar
+									</Button>
+								</div>
+							</form>
+						</div>
+					{/if}
 				</Card.Content>
 			</Card.Root>
 		</div>
