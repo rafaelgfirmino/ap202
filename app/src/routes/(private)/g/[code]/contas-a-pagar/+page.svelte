@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import { onMount } from 'svelte';
 	import CardEmpty from '$lib/components/app/card-empty/index.svelte';
+	import ContaAPagarFormPage from '$lib/components/app/conta-a-pagar-form-page.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
@@ -32,6 +32,10 @@
 	let bankAccounts = $state<BankAccount[]>([]);
 	let isLoading = $state(true);
 	let errorMessage = $state('');
+
+	// Create/edit dialog
+	let showFormDialog = $state(false);
+	let formContaId = $state<number | null>(null);
 
 	type StatusFilter = 'all' | 'pending' | 'paid';
 	let statusFilter = $state<StatusFilter>('all');
@@ -100,6 +104,22 @@
 		payBankAccountId = bankAccounts.length > 0 ? String(bankAccounts[0]!.id) : '';
 		payError = '';
 		showPayDialog = true;
+	}
+
+	function openCreateDialog(): void {
+		formContaId = null;
+		showFormDialog = true;
+	}
+
+	function openEditDialog(conta: ContaAPagar): void {
+		formContaId = conta.id;
+		showFormDialog = true;
+	}
+
+	async function handleFormSaved(): Promise<void> {
+		showFormDialog = false;
+		formContaId = null;
+		await loadData();
 	}
 
 	async function handleMarkAsPaid(): Promise<void> {
@@ -171,12 +191,39 @@
 		</div>
 		<Button
 			type="button"
-			onclick={() => void goto(`/g/${params.code}/contas-a-pagar/nova`)}
+			onclick={openCreateDialog}
 		>
 			<PlusIcon class="mr-2 size-4" />
 			Nova conta
 		</Button>
 	</section>
+
+	<!-- CREATE/EDIT DIALOG -->
+	<Dialog.Root bind:open={showFormDialog}>
+		<Dialog.Content class="max-h-[90vh] w-[calc(100vw-2rem)] max-w-none overflow-y-auto sm:max-w-[1180px]">
+			<Dialog.Header>
+				<Dialog.Title>{formContaId == null ? 'Nova conta a pagar' : 'Editar conta a pagar'}</Dialog.Title>
+				<Dialog.Description>
+					{formContaId == null
+						? 'Cadastre a despesa sem sair da listagem.'
+						: 'Atualize os dados da conta selecionada.'}
+				</Dialog.Description>
+			</Dialog.Header>
+
+			{#key formContaId}
+				<ContaAPagarFormPage
+					condominiumCode={params.code}
+					contaId={formContaId}
+					mode="embedded"
+					onSaved={handleFormSaved}
+					onCancel={() => {
+						showFormDialog = false;
+						formContaId = null;
+					}}
+				/>
+			{/key}
+		</Dialog.Content>
+	</Dialog.Root>
 
 	<!-- MARK AS PAID DIALOG -->
 	<Dialog.Root bind:open={showPayDialog}>
@@ -345,7 +392,7 @@
 						title="Nenhuma conta encontrada"
 						description="Não há contas a pagar para os filtros selecionados. Clique em 'Nova conta' para cadastrar uma despesa."
 						actionLabel="Nova conta"
-						onAction={() => void goto(`/g/${params.code}/contas-a-pagar/nova`)}
+						onAction={openCreateDialog}
 					/>
 				</div>
 			{:else}
@@ -355,6 +402,7 @@
 							<Table.Row class="hover:bg-transparent">
 								<Table.Head class="w-36 pl-6">Vencimento</Table.Head>
 								<Table.Head>Descrição</Table.Head>
+								<Table.Head class="w-44">Fornecedor</Table.Head>
 								<Table.Head class="w-32">Categoria</Table.Head>
 								<Table.Head class="w-24">Escopo</Table.Head>
 								<Table.Head class="w-32 text-right">Valor</Table.Head>
@@ -380,6 +428,11 @@
 									<!-- Descrição -->
 									<Table.Cell class="font-medium text-foreground">
 										{conta.description}
+									</Table.Cell>
+
+									<!-- Fornecedor -->
+									<Table.Cell class="text-muted-foreground">
+										{conta.supplier_name || 'Fornecedor não informado'}
 									</Table.Cell>
 
 									<!-- Categoria -->
@@ -449,8 +502,7 @@
 														variant="outline"
 														size="icon"
 														class="size-8"
-														onclick={() =>
-															void goto(`/g/${params.code}/contas-a-pagar/${conta.id}/editar`)}
+														onclick={() => openEditDialog(conta)}
 													>
 														<PencilIcon class="size-4" />
 													</Button>

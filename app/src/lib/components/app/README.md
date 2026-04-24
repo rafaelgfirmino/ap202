@@ -20,6 +20,26 @@ Exemplo de uso:
 <FinancialStatusBadge status="adimplente" />
 ```
 
+## `conta-a-pagar-form-page.svelte`
+
+Centraliza a criação e edição de contas a pagar, carregando o rateio padrão do condomínio para novas contas, exigindo fornecedor e permitindo escolher entre cobrança igual por unidade ou por fração ideal.
+
+Exemplo de uso:
+
+```svelte
+<ContaAPagarFormPage condominiumCode={params.code} />
+```
+
+## `SuppliersDataTable.svelte`
+
+Renderiza a listagem paginada de fornecedores com dados cadastrais, categoria, contato, dados bancários, Pix e status, seguindo o mesmo fluxo visual das listagens operacionais do condomínio.
+
+Exemplo de uso:
+
+```svelte
+<SuppliersDataTable rows={supplierRows} />
+```
+
 ## `unit-form-page.svelte`
 
 Centraliza os modos de criação, edição e visualização da unidade. No modo `view`, delega a apresentação financeira para `UnitFinancialReport.svelte`.
@@ -87,4 +107,14 @@ Exemplo de uso:
 
 ```svelte
 <CreateCondominiumWizard onCreated={handleCreated} />
+```
+
+## `CondominiumGeneralSettings.svelte`
+
+Renderiza a área de informações gerais do condomínio dentro do ambiente privado, exibindo dados cadastrais, síndico atual identificado pela role ativa, regra padrão de cobrança e edição da área do terreno.
+
+Exemplo de uso:
+
+```svelte
+<CondominiumGeneralSettings condominiumCode={params.code} />
 ```

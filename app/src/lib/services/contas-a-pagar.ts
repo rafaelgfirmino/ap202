@@ -1,6 +1,7 @@
 import { createLivroCaixaEntry } from './livro-caixa.js';
-import { getCondominiumSettings } from './condominium-settings.js';
 import { listBankAccounts } from './bank-accounts.js';
+import type { RateioMethod } from './balancete.js';
+import { listFornecedores } from './fornecedores.js';
 
 export type ContaStatus = 'pending' | 'paid';
 export type EntryScope = 'geral' | 'bloco' | 'unidade';
@@ -15,8 +16,11 @@ export interface ContaAPagar {
 	status: ContaStatus;
 	payment_date: string | null;
 	bank_account_id: number | null;
+	supplier_id: number | null;
+	supplier_name: string;
 	scope: EntryScope;
 	scope_value: string | null;
+	rateio_method: RateioMethod;
 	created_at: string;
 }
 
@@ -25,8 +29,10 @@ export interface CreateContaInput {
 	category: string;
 	value: number;
 	due_date: string;
+	supplier_id: number;
 	scope: EntryScope;
 	scope_value: string | null;
+	rateio_method: RateioMethod;
 }
 
 export interface MarkAsPaidInput {
@@ -55,8 +61,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'paid',
 			payment_date: '2026-03-09',
 			bank_account_id: 1,
+			supplier_id: 2,
+			supplier_name: 'Limpeza Total BH',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -69,8 +78,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'paid',
 			payment_date: '2026-03-12',
 			bank_account_id: 1,
+			supplier_id: 1,
+			supplier_name: 'Elevadores Prime',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -83,8 +95,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'paid',
 			payment_date: '2026-03-15',
 			bank_account_id: 1,
+			supplier_id: 3,
+			supplier_name: 'Segura Portaria',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -97,8 +112,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'paid',
 			payment_date: '2026-03-18',
 			bank_account_id: 1,
+			supplier_id: 1,
+			supplier_name: 'Elevadores Prime',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		// April 2026
@@ -112,8 +130,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'paid',
 			payment_date: '2026-04-09',
 			bank_account_id: 1,
+			supplier_id: 2,
+			supplier_name: 'Limpeza Total BH',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -126,8 +147,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'paid',
 			payment_date: '2026-04-12',
 			bank_account_id: 1,
+			supplier_id: 1,
+			supplier_name: 'Elevadores Prime',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -140,8 +164,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'pending',
 			payment_date: null,
 			bank_account_id: null,
+			supplier_id: 3,
+			supplier_name: 'Segura Portaria',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -154,8 +181,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'pending',
 			payment_date: null,
 			bank_account_id: null,
+			supplier_id: 1,
+			supplier_name: 'Elevadores Prime',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		},
 		{
@@ -168,8 +198,11 @@ function seedContas(condominiumCode: string): void {
 			status: 'pending',
 			payment_date: null,
 			bank_account_id: null,
+			supplier_id: 1,
+			supplier_name: 'Elevadores Prime',
 			scope: 'geral',
 			scope_value: null,
+			rateio_method: 'fracao',
 			created_at: now
 		}
 	];
@@ -219,6 +252,13 @@ export async function createConta(
 ): Promise<ContaAPagar> {
 	await delay(200);
 	const entries = getContasForCode(condominiumCode);
+	const fornecedores = await listFornecedores(condominiumCode);
+	const fornecedor = fornecedores.data.find((item) => item.id === input.supplier_id);
+
+	if (!fornecedor) {
+		throw new Error('Fornecedor não encontrado.');
+	}
+
 	const conta: ContaAPagar = {
 		id: nextContaId++,
 		condominiumCode,
@@ -229,8 +269,11 @@ export async function createConta(
 		status: 'pending',
 		payment_date: null,
 		bank_account_id: null,
+		supplier_id: fornecedor.id,
+		supplier_name: fornecedor.name,
 		scope: input.scope,
 		scope_value: input.scope_value,
+		rateio_method: input.rateio_method,
 		created_at: new Date().toISOString()
 	};
 	entries.push(conta);
@@ -246,6 +289,13 @@ export async function updateConta(
 	const entries = getContasForCode(condominiumCode);
 	const idx = entries.findIndex((e) => e.id === id);
 	if (idx === -1) throw new Error('Conta a pagar não encontrada.');
+	const fornecedores = await listFornecedores(condominiumCode);
+	const fornecedor = fornecedores.data.find((item) => item.id === input.supplier_id);
+
+	if (!fornecedor) {
+		throw new Error('Fornecedor não encontrado.');
+	}
+
 	const existing = entries[idx]!;
 	const updated: ContaAPagar = {
 		...existing,
@@ -253,8 +303,11 @@ export async function updateConta(
 		category: input.category,
 		value: input.value,
 		due_date: input.due_date,
+		supplier_id: fornecedor.id,
+		supplier_name: fornecedor.name,
 		scope: input.scope,
-		scope_value: input.scope_value
+		scope_value: input.scope_value,
+		rateio_method: input.rateio_method
 	};
 	entries[idx] = updated;
 	return { ...updated };
@@ -283,10 +336,7 @@ export async function markAsPaid(
 	if (idx === -1) throw new Error('Conta a pagar não encontrada.');
 	const conta = entries[idx]!;
 
-	const [bankAccounts, settings] = await Promise.all([
-		listBankAccounts(condominiumCode),
-		getCondominiumSettings(condominiumCode)
-	]);
+	const bankAccounts = await listBankAccounts(condominiumCode);
 
 	const bankAccount = bankAccounts.find((b) => b.id === input.bank_account_id);
 	if (!bankAccount) throw new Error('Conta bancária não encontrada.');
@@ -296,15 +346,21 @@ export async function markAsPaid(
 		date: input.payment_date,
 		description: conta.description,
 		category: conta.category,
-		type: 'saida',
+		type: 'debit',
 		value: conta.value,
 		bank_account_id: input.bank_account_id,
 		bank_account_name: bankAccount.name,
-		origin: 'conta_a_pagar',
-		origin_id: conta.id,
+		source_type: 'expense',
+		source_id: conta.id,
 		scope: conta.scope,
 		scope_value: conta.scope_value,
-		rateio_method: settings.rateio_method
+		rateio_method: conta.rateio_method,
+		status: 'confirmed',
+		due_date: conta.due_date,
+		competence_date: conta.due_date,
+		occurred_at: input.payment_date,
+		paid_at: input.payment_date,
+		created_by: 'Sistema'
 	});
 
 	const updated: ContaAPagar = {

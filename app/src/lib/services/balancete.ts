@@ -65,8 +65,8 @@ export async function listBalancetes(condominiumCode: string): Promise<Balancete
 	const summaries = await Promise.all(
 		list.map(async (b) => {
 			const entries = await listLivroCaixaEntries(condominiumCode, b.month);
-			const total_expenses = entries.filter((e) => e.type === 'saida').reduce((s, e) => s + e.value, 0);
-			const total_revenues = entries.filter((e) => e.type === 'entrada').reduce((s, e) => s + e.value, 0);
+			const total_expenses = entries.filter((e) => e.type === 'debit').reduce((s, e) => s + e.value, 0);
+			const total_revenues = entries.filter((e) => e.type === 'credit').reduce((s, e) => s + e.value, 0);
 			return { ...b, total_expenses, total_revenues, entry_count: entries.length };
 		})
 	);

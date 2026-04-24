@@ -14,6 +14,9 @@
 		getContaAPagar,
 		updateConta
 	} from '$lib/services/contas-a-pagar.js';
+	import { getCondominiumSettings } from '$lib/services/condominium-settings.js';
+	import type { RateioMethod } from '$lib/services/balancete.js';
+	import { listFornecedores, type Fornecedor } from '$lib/services/fornecedores.js';
 	import { listUnitGroups, type UnitGroup } from '$lib/services/unit-groups.js';
 	import { listUnits, type Unit } from '$lib/services/units.js';
 	import { cn } from '$lib/utils.js';
@@ -21,14 +24,19 @@
 	interface Props {
 		condominiumCode: string;
 		contaId?: number | null;
+		mode?: 'page' | 'embedded';
+		onSaved?: () => void | Promise<void>;
+		onCancel?: () => void;
 	}
 
-	let { condominiumCode, contaId = null }: Props = $props();
+	let { condominiumCode, contaId = null, mode = 'page', onSaved, onCancel }: Props = $props();
 
 	const isEditing = $derived(contaId != null);
+	const isEmbedded = $derived(mode === 'embedded');
 
 	let groups = $state<UnitGroup[]>([]);
 	let units = $state<Unit[]>([]);
+	let fornecedores = $state<Fornecedor[]>([]);
 	let isLoading = $state(true);
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
@@ -36,11 +44,13 @@
 	// Form fields
 	let formDescription = $state('');
 	let formCategory = $state('Manutenção');
+	let formSupplierId = $state('');
 	let formValue = $state('');
 	let formDueDate = $state('');
 	let formScope = $state<'geral' | 'bloco' | 'unidade'>('geral');
 	let formScopeBloco = $state('');
 	let formScopeUnit = $state('');
+	let formRateioMethod = $state<RateioMethod>('igual');
 
 	const CATEGORIES = [
 		'Manutenção',
@@ -83,6 +93,18 @@
 
 	const parsedValue = $derived(parseMoney(formValue));
 	const hasValue = $derived(parsedValue > 0);
+	const rateioMethodLabel = $derived(
+		formRateioMethod === 'fracao' ? 'Fração ideal' : 'Igual por unidade'
+	);
+	const containerClass = $derived(
+		isEmbedded
+			? 'flex w-full flex-col gap-4'
+			: 'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-5 sm:px-6'
+	);
+	const formContentClass = $derived(
+		isEmbedded ? 'grid gap-5 pt-5 lg:grid-cols-2' : 'flex flex-col gap-5 pt-5'
+	);
+	const fullWidthFieldClass = $derived(isEmbedded ? 'space-y-2 lg:col-span-2' : 'space-y-2');
 
 	const filteredUnits = $derived(
 		formScopeBloco ? units.filter((u) => u.group_name === formScopeBloco) : units
@@ -92,25 +114,32 @@
 		isLoading = true;
 		errorMessage = '';
 		try {
-			const [g, u] = await Promise.all([
+			const [g, u, suppliersResponse, settings] = await Promise.all([
 				listUnitGroups(condominiumCode),
-				listUnits(condominiumCode)
+				listUnits(condominiumCode),
+				listFornecedores(condominiumCode),
+				getCondominiumSettings(condominiumCode)
 			]);
 			groups = g.data;
 			units = u.data;
+			fornecedores = suppliersResponse.data;
+			formRateioMethod = settings.rateio_method;
 
 			if (groups.length > 0) formScopeBloco = groups[0]!.name;
 			if (units.length > 0) formScopeUnit = String(units[0]!.id);
+			if (fornecedores.length > 0) formSupplierId = String(fornecedores[0]!.id);
 
 			if (contaId != null) {
 				const conta = await getContaAPagar(condominiumCode, contaId);
 				formDescription = conta.description;
 				formCategory = conta.category;
+				formSupplierId = conta.supplier_id != null ? String(conta.supplier_id) : '';
 				formValue = String(conta.value).replace('.', ',');
 				formDueDate = conta.due_date;
 				formScope = conta.scope;
 				if (conta.scope === 'bloco') formScopeBloco = conta.scope_value ?? '';
 				if (conta.scope === 'unidade') formScopeUnit = conta.scope_value ?? '';
+				formRateioMethod = conta.rateio_method;
 			}
 		} catch (err) {
 			errorMessage = err instanceof Error ? err.message : 'Não foi possível carregar os dados.';
@@ -122,6 +151,7 @@
 	async function handleSubmit(): Promise<void> {
 		errorMessage = '';
 		if (!formDescription.trim()) { errorMessage = 'Informe a descrição.'; return; }
+		if (!formSupplierId) { errorMessage = 'Selecione o fornecedor.'; return; }
 		if (!hasValue) { errorMessage = 'Informe o valor da conta.'; return; }
 		if (!formDueDate) { errorMessage = 'Informe a data de vencimento.'; return; }
 		if (formScope === 'bloco' && !formScopeBloco) { errorMessage = 'Selecione o bloco.'; return; }
@@ -133,11 +163,13 @@
 			category: formCategory,
 			value: parsedValue,
 			due_date: formDueDate,
+			supplier_id: Number(formSupplierId),
 			scope: formScope,
 			scope_value:
 				formScope === 'bloco' ? formScopeBloco
 				: formScope === 'unidade' ? formScopeUnit
-				: null
+				: null,
+			rateio_method: formRateioMethod
 		};
 
 		try {
@@ -146,7 +178,12 @@
 			} else {
 				await createConta(condominiumCode, input);
 			}
-			await goto(`/g/${condominiumCode}/contas-a-pagar`);
+
+			if (onSaved) {
+				await onSaved();
+			} else {
+				await goto(`/g/${condominiumCode}/contas-a-pagar`);
+			}
 		} catch (err) {
 			errorMessage = err instanceof Error ? err.message : 'Não foi possível salvar a conta.';
 		} finally {
@@ -154,31 +191,42 @@
 		}
 	}
 
+	function handleCancel(): void {
+		if (onCancel) {
+			onCancel();
+			return;
+		}
+
+		void goto(`/g/${condominiumCode}/contas-a-pagar`);
+	}
+
 	onMount(async () => {
 		await loadPageData();
 	});
 </script>
 
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-5 sm:px-6">
+<div class={containerClass}>
 	<!-- HEADER -->
-	<section class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-		<div>
-			<h1 class="text-2xl font-semibold tracking-tight text-foreground">
-				{isEditing ? 'Editar conta' : 'Nova conta a pagar'}
-			</h1>
-			<p class="mt-1 text-sm text-muted-foreground">
-				{isEditing ? 'Atualize os dados da conta a pagar.' : 'Cadastre uma nova despesa a pagar.'}
-			</p>
-		</div>
-		<Button
-			type="button"
-			variant="outline"
-			onclick={() => void goto(`/g/${condominiumCode}/contas-a-pagar`)}
-		>
-			<ArrowLeftIcon class="mr-2 size-4" />
-			Voltar
-		</Button>
-	</section>
+	{#if !isEmbedded}
+		<section class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+			<div>
+				<h1 class="text-2xl font-semibold tracking-tight text-foreground">
+					{isEditing ? 'Editar conta' : 'Nova conta a pagar'}
+				</h1>
+				<p class="mt-1 text-sm text-muted-foreground">
+					{isEditing ? 'Atualize os dados da conta a pagar.' : 'Cadastre uma nova despesa a pagar.'}
+				</p>
+			</div>
+			<Button
+				type="button"
+				variant="outline"
+				onclick={handleCancel}
+			>
+				<ArrowLeftIcon class="mr-2 size-4" />
+				Voltar
+			</Button>
+		</section>
+	{/if}
 
 	{#if isLoading}
 		<Card.Root>
@@ -200,9 +248,9 @@
 			{/if}
 
 			<Card.Root>
-				<Card.Content class="flex flex-col gap-5 pt-5">
+				<Card.Content class={formContentClass}>
 					<!-- DESCRIÇÃO -->
-					<div class="space-y-2">
+					<div class={fullWidthFieldClass}>
 						<Label for="form-description">
 							Descrição <span class="ml-1 font-normal text-muted-foreground">obrigatório</span>
 						</Label>
@@ -229,6 +277,37 @@
 								<option value={cat}>{cat}</option>
 							{/each}
 						</select>
+					</div>
+
+					<!-- FORNECEDOR -->
+					<div
+						id="conta-a-pagar-supplier-section"
+						data-test="conta-a-pagar-supplier-section"
+						class="space-y-2"
+					>
+						<Label for="form-supplier">Fornecedor</Label>
+						<select
+							id="form-supplier"
+							data-test="form-supplier"
+							class="flex h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+							value={formSupplierId}
+							disabled={isSubmitting}
+							onchange={(e) => {
+								formSupplierId = (e.currentTarget as HTMLSelectElement).value;
+							}}
+						>
+							<option value="">Selecione o fornecedor...</option>
+							{#each fornecedores as fornecedor (fornecedor.id)}
+								<option value={String(fornecedor.id)}>{fornecedor.name}</option>
+							{/each}
+						</select>
+						<p
+							id="conta-a-pagar-supplier-help"
+							data-test="conta-a-pagar-supplier-help"
+							class="text-xs text-muted-foreground"
+						>
+							O fornecedor fica vinculado ao lançamento da conta.
+						</p>
 					</div>
 
 					<!-- VALOR -->
@@ -267,7 +346,7 @@
 					</div>
 
 					<!-- ESCOPO -->
-					<div class="space-y-2">
+					<div class={fullWidthFieldClass}>
 						<Label>Escopo</Label>
 						<Tabs.Root
 							value={formScope}
@@ -287,6 +366,42 @@
 							{:else}
 								Aplicada diretamente a uma unidade específica.
 							{/if}
+						</p>
+					</div>
+
+					<!-- RATEIO -->
+					<div
+						id="conta-a-pagar-rateio-section"
+						data-test="conta-a-pagar-rateio-section"
+						class="space-y-2"
+					>
+						<Label
+							id="conta-a-pagar-rateio-label"
+							data-test="conta-a-pagar-rateio-label"
+							for="form-rateio-method"
+						>
+							Forma de cobrança
+						</Label>
+						<select
+							id="form-rateio-method"
+							data-test="form-rateio-method"
+							class="flex h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+							value={formRateioMethod}
+							disabled={isSubmitting}
+							onchange={(e) => {
+								formRateioMethod = (e.currentTarget as HTMLSelectElement).value as RateioMethod;
+							}}
+						>
+							<option value="igual">Igual por unidade</option>
+							<option value="fracao">Fração ideal</option>
+						</select>
+						<p
+							id="conta-a-pagar-rateio-help"
+							data-test="conta-a-pagar-rateio-help"
+							class="text-xs text-muted-foreground"
+						>
+							Esta conta será cobrada por {rateioMethodLabel.toLowerCase()}. Em novas contas,
+							o valor inicial vem da configuração do condomínio.
 						</p>
 					</div>
 
@@ -336,18 +451,18 @@
 					{/if}
 
 					<!-- ACTIONS -->
-					<div class="flex items-center justify-between gap-3 pt-2">
+					<div class="flex items-center justify-between gap-3 pt-2 lg:col-span-2">
 						<Button
 							type="button"
 							variant="ghost"
 							disabled={isSubmitting}
-							onclick={() => void goto(`/g/${condominiumCode}/contas-a-pagar`)}
+							onclick={handleCancel}
 						>
 							Cancelar
 						</Button>
 						<Button
 							type="button"
-							disabled={isSubmitting || !hasValue || !formDescription.trim() || !formDueDate}
+							disabled={isSubmitting || !hasValue || !formDescription.trim() || !formDueDate || !formSupplierId}
 							onclick={handleSubmit}
 						>
 							{isSubmitting

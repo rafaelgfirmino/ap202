@@ -6,11 +6,13 @@
 	import Building2Icon from '@lucide/svelte/icons/building-2';
 	import ChartColumnIcon from '@lucide/svelte/icons/chart-column';
 	import ClipboardListIcon from '@lucide/svelte/icons/clipboard-list';
+	import CogIcon from '@lucide/svelte/icons/cog';
 	import DoorOpenIcon from '@lucide/svelte/icons/door-open';
 	import LandmarkIcon from '@lucide/svelte/icons/landmark';
 	import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
 	import MapIcon from '@lucide/svelte/icons/map';
 	import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
+	import TruckIcon from '@lucide/svelte/icons/truck';
 	import UsersIcon from '@lucide/svelte/icons/users';
 	import NavMain from './nav-main.svelte';
 	import NavUser from './nav-user.svelte';
@@ -42,22 +44,38 @@
 
 	const condominiumCode = $derived(page.params.code ?? '');
 	const dashboardUrl = $derived(condominiumCode ? `/g/${condominiumCode}` : '/');
+	const condominiumSettingsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/condominio` : '#');
 	const groupsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/grupos` : '#');
 	const unitsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/unidades` : '#');
 	const residentsUrl = $derived(condominiumCode ? `/g/${condominiumCode}/moradores` : '#');
 	const usersUrl = $derived(condominiumCode ? `/g/${condominiumCode}/usuarios` : '#');
 	const contasUrl = $derived(condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '#');
+	const fornecedoresUrl = $derived(condominiumCode ? `/g/${condominiumCode}/fornecedores` : '#');
 	const livroCaixaUrl = $derived(condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '#');
 	const balanceteUrl = $derived(condominiumCode ? `/g/${condominiumCode}/balancete` : '#');
 	const financeiroActive = $derived(
-		page.url.pathname.startsWith(
-			condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '/contas-a-pagar'
-		) ||
+			page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '/contas-a-pagar'
+			) ||
+			page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/fornecedores` : '/fornecedores'
+			) ||
 			page.url.pathname.startsWith(
 				condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '/livro-caixa'
 			) ||
 			page.url.pathname.startsWith(
 				condominiumCode ? `/g/${condominiumCode}/balancete` : '/balancete'
+			)
+	);
+	const condominiumSettingsActive = $derived(
+		page.url.pathname.startsWith(
+			condominiumCode ? `/g/${condominiumCode}/condominio` : '/condominio'
+		) ||
+			page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/grupos` : '/grupos'
+			) ||
+			page.url.pathname.startsWith(
+				condominiumCode ? `/g/${condominiumCode}/unidades` : '/unidades'
 			)
 	);
 
@@ -69,11 +87,56 @@
 			isActive: page.url.pathname === dashboardUrl
 		},
 		{
-			title: 'Estrutura',
+			title: 'Financeiro',
+			url: '#',
+			icon: LandmarkIcon,
+			isActive: financeiroActive,
+			items: [
+				{
+					title: 'Contas a Pagar',
+					url: contasUrl,
+					icon: ClipboardListIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '/contas-a-pagar'
+					)
+				},
+				{
+					title: 'Fornecedores',
+					url: fornecedoresUrl,
+					icon: TruckIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/fornecedores` : '/fornecedores'
+					)
+				},
+				{
+					title: 'Fluxo de Caixa',
+					url: livroCaixaUrl,
+					icon: BookOpenIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '/livro-caixa'
+					)
+				},
+				{
+					title: 'Balancetes',
+					url: balanceteUrl,
+					icon: ChartColumnIcon,
+					isActive: page.url.pathname.startsWith(
+						condominiumCode ? `/g/${condominiumCode}/balancete` : '/balancete'
+					)
+				}
+			]
+		},
+		{
+			title: 'Configurações do condomínio',
 			url: '#',
 			icon: Building2Icon,
-			isActive: page.url.pathname.startsWith(condominiumCode ? `/g/${condominiumCode}/` : '/g/'),
+			isActive: condominiumSettingsActive,
 			items: [
+				{
+					title: 'Informações gerais',
+					url: condominiumSettingsUrl,
+					icon: CogIcon
+				},
 				{
 					title: 'Grupos',
 					url: groupsUrl,
@@ -98,38 +161,6 @@
 			isActive: page.url.pathname.startsWith(
 				condominiumCode ? `/g/${condominiumCode}/moradores` : '/moradores'
 			)
-		},
-		{
-			title: 'Financeiro',
-			url: '#',
-			icon: LandmarkIcon,
-			isActive: financeiroActive,
-			items: [
-				{
-					title: 'Contas a Pagar',
-					url: contasUrl,
-					icon: ClipboardListIcon,
-					isActive: page.url.pathname.startsWith(
-						condominiumCode ? `/g/${condominiumCode}/contas-a-pagar` : '/contas-a-pagar'
-					)
-				},
-				{
-					title: 'Livro Caixa',
-					url: livroCaixaUrl,
-					icon: BookOpenIcon,
-					isActive: page.url.pathname.startsWith(
-						condominiumCode ? `/g/${condominiumCode}/livro-caixa` : '/livro-caixa'
-					)
-				},
-				{
-					title: 'Balancetes',
-					url: balanceteUrl,
-					icon: ChartColumnIcon,
-					isActive: page.url.pathname.startsWith(
-						condominiumCode ? `/g/${condominiumCode}/balancete` : '/balancete'
-					)
-				}
-			]
 		},
 		{
 			title: 'Usuários',

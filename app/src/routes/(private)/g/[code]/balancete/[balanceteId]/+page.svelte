@@ -77,7 +77,14 @@
 	}
 
 	function getOriginLabel(origin: string): string {
-		return ({ conta_a_pagar: 'Conta a pagar', pagamento_condomino: 'Condômino', manual: 'Manual' } as Record<string, string>)[origin] ?? origin;
+		return ({
+			expense: 'Despesa',
+			payment: 'Pagamento',
+			charge: 'Cobrança',
+			manual: 'Manual',
+			transfer: 'Transferência',
+			reversal: 'Estorno'
+		} as Record<string, string>)[origin] ?? origin;
 	}
 
 	// --- rateio calculation ---
@@ -106,8 +113,8 @@
 
 	const isOpen = $derived(balancete?.status === 'open');
 
-	const expenseEntries = $derived(entries.filter((e) => e.type === 'saida'));
-	const revenueEntries = $derived(entries.filter((e) => e.type === 'entrada'));
+	const expenseEntries = $derived(entries.filter((e) => e.type === 'debit'));
+	const revenueEntries = $derived(entries.filter((e) => e.type === 'credit'));
 	const totalExpenses = $derived(expenseEntries.reduce((s, e) => s + e.value, 0));
 	const totalRevenues = $derived(revenueEntries.reduce((s, e) => s + e.value, 0));
 
@@ -180,7 +187,7 @@
 				listUnits(params.code)
 			]);
 			balancete = b;
-			entries = e.filter((entry) => entry.date.startsWith(b.month));
+			entries = e.filter((entry) => entry.competence_date.startsWith(b.month));
 			units = u.data;
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Não foi possível carregar o balancete.';
@@ -394,25 +401,25 @@
 											<Table.Cell>
 												<span class={cn(
 													'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-													entry.type === 'saida' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+													entry.type === 'debit' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
 												)}>
-													{entry.type === 'saida' ? 'Saída' : 'Entrada'}
+													{entry.type === 'debit' ? 'Saída' : 'Entrada'}
 												</span>
 											</Table.Cell>
 											<Table.Cell class="text-xs text-muted-foreground">{entry.bank_account_name}</Table.Cell>
 											<Table.Cell>
 												<span class={cn(
 													'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-													entry.origin === 'conta_a_pagar' ? 'bg-muted text-muted-foreground' :
-													entry.origin === 'pagamento_condomino' ? 'bg-sky-100 text-sky-700' :
+													entry.origin === 'expense' ? 'bg-muted text-muted-foreground' :
+													entry.origin === 'payment' ? 'bg-sky-100 text-sky-700' :
 													'bg-amber-100 text-amber-700'
 												)}>
 													{getOriginLabel(entry.origin)}
 												</span>
 											</Table.Cell>
 											<Table.Cell class="pr-6 text-right font-bold">
-												<span class={entry.type === 'saida' ? 'text-rose-700' : 'text-emerald-700'}>
-													{entry.type === 'saida' ? '−' : '+'}{formatCurrency(entry.value)}
+												<span class={entry.type === 'debit' ? 'text-rose-700' : 'text-emerald-700'}>
+													{entry.type === 'debit' ? '−' : '+'}{formatCurrency(entry.value)}
 												</span>
 											</Table.Cell>
 										</Table.Row>
