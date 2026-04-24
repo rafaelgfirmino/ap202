@@ -20,6 +20,7 @@
 	import Building2Icon from '@lucide/svelte/icons/building-2';
 	import CarFrontIcon from '@lucide/svelte/icons/car-front';
 	import HouseIcon from '@lucide/svelte/icons/house';
+	import posthog from 'posthog-js';
 
 	let email = $state('');
 	let password = $state('');
@@ -66,7 +67,10 @@
 		return 'Confirmar código';
 	});
 
-	function setSecondFactorState(options: SecondFactorOption[], strategy: SecondFactorStrategy): void {
+	function setSecondFactorState(
+		options: SecondFactorOption[],
+		strategy: SecondFactorStrategy
+	): void {
 		secondFactorOptions = options;
 		selectedSecondFactorStrategy = strategy;
 		loginStep = 'second-factor';
@@ -112,6 +116,8 @@
 			const result = await signInWithPassword({ email, password });
 
 			if (result.status === 'complete') {
+				posthog.identify(email, { email });
+				posthog.capture('user_signed_in', { method: 'password' });
 				await redirectToInitialPage();
 				return;
 			}
@@ -125,6 +131,7 @@
 				return;
 			}
 
+			posthog.capture('user_sign_in_failed', { error_message: message });
 			errorMessage = message;
 		} finally {
 			isLoading = false;
@@ -157,6 +164,9 @@
 			});
 
 			if (result.status === 'complete') {
+				posthog.identify(email, { email });
+				posthog.capture('second_factor_submitted', { strategy: selectedSecondFactorStrategy });
+				posthog.capture('user_signed_in', { method: 'second_factor' });
 				await redirectToInitialPage();
 				return;
 			}
@@ -179,11 +189,11 @@
 
 <main
 	id="security-login-page"
-	class="from-background to-muted/40 flex min-h-screen items-center justify-center bg-gradient-to-br px-4 py-8"
+	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/40 px-4 py-8"
 >
 	<section
 		id="security-login-shell"
-		class="bg-card ring-border grid w-full max-w-6xl overflow-hidden ring-1 lg:grid-cols-[1fr_1.12fr]"
+		class="grid w-full max-w-6xl overflow-hidden bg-card ring-1 ring-border lg:grid-cols-[1fr_1.12fr]"
 	>
 		<div
 			id="security-login-form-panel"
@@ -205,7 +215,7 @@
 				<Card.Header id="security-login-heading" class="space-y-2 px-0">
 					<Card.Title
 						id="security-login-title"
-						class="text-foreground text-5xl font-semibold text-center tracking-tight"
+						class="text-center text-5xl font-semibold tracking-tight text-foreground"
 					>
 						{loginStep === 'password' ? 'Entrar' : secondFactorTitle}
 					</Card.Title>
@@ -225,7 +235,8 @@
 					{#if loginStep === 'password'}
 						<form id="security-login-form" class="space-y-5" onsubmit={handleSubmit}>
 							<div id="security-login-email-field" class="space-y-2">
-								<Label id="security-login-email-label" for="security-login-email-input">Email</Label>
+								<Label id="security-login-email-label" for="security-login-email-input">Email</Label
+								>
 								<Input
 									id="security-login-email-input"
 									type="email"
@@ -253,7 +264,7 @@
 							{#if errorMessage}
 								<p
 									id="security-login-error-message"
-									class="text-destructive border border-current px-4 py-2 text-xs"
+									class="border border-current px-4 py-2 text-xs text-destructive"
 								>
 									{errorMessage}
 								</p>
@@ -275,7 +286,9 @@
 									<Button
 										id={`security-login-factor-option-${option.strategy}`}
 										type="button"
-										variant={selectedSecondFactorStrategy === option.strategy ? 'default' : 'outline'}
+										variant={selectedSecondFactorStrategy === option.strategy
+											? 'default'
+											: 'outline'}
 										class="h-auto justify-start px-4 py-3 text-left"
 										disabled={isLoading}
 										onclick={() => handleSecondFactorSelection(option.strategy)}
@@ -310,7 +323,7 @@
 								{#if errorMessage}
 									<p
 										id="security-login-error-message"
-										class="text-destructive border border-current px-4 py-2 text-xs"
+										class="border border-current px-4 py-2 text-xs text-destructive"
 									>
 										{errorMessage}
 									</p>
@@ -346,19 +359,19 @@
 
 		<div
 			id="security-login-illustration-panel"
-			class="from-background to-muted/40 border-border/80 flex items-center justify-center border-t px-5 py-6 lg:border-t-0 lg:border-l lg:px-8"
+			class="flex items-center justify-center border-t border-border/80 from-background to-muted/40 px-5 py-6 lg:border-t-0 lg:border-l lg:px-8"
 		>
 			<div
 				id="security-login-illustration-frame"
-				class="bg-background flex w-full max-w-2xl items-center justify-center p-5 shadow-sm ring-1 ring-black/5"
+				class="flex w-full max-w-2xl items-center justify-center bg-background p-5 shadow-sm ring-1 ring-black/5"
 			>
 				<div
 					id="security-login-illustration-inner"
-					class="bg-muted/20 relative flex aspect-square w-full items-center justify-center overflow-hidden border border-slate-200 p-6"
+					class="relative flex aspect-square w-full items-center justify-center overflow-hidden border border-slate-200 bg-muted/20 p-6"
 				>
 					<div
 						id="security-login-cloud-top-left"
-						class="absolute left-8 top-16 h-4 w-10 border border-slate-400 bg-white"
+						class="absolute top-16 left-8 h-4 w-10 border border-slate-400 bg-white"
 					></div>
 					<div
 						id="security-login-cloud-top-center"
@@ -366,15 +379,15 @@
 					></div>
 					<div
 						id="security-login-cloud-top-right"
-						class="absolute right-12 top-10 h-4 w-10 border border-slate-400 bg-white"
+						class="absolute top-10 right-12 h-4 w-10 border border-slate-400 bg-white"
 					></div>
 					<div
 						id="security-login-cloud-right"
-						class="absolute right-0 top-1/3 h-16 w-6 border border-slate-400 bg-white"
+						class="absolute top-1/3 right-0 h-16 w-6 border border-slate-400 bg-white"
 					></div>
 					<div
 						id="security-login-cloud-left"
-						class="absolute left-0 top-1/3 h-16 w-6 border border-slate-400 bg-white"
+						class="absolute top-1/3 left-0 h-16 w-6 border border-slate-400 bg-white"
 					></div>
 
 					<div
@@ -385,9 +398,18 @@
 							id="security-login-building-left"
 							class="relative flex h-56 w-24 flex-col border-2 border-slate-700 bg-white"
 						>
-							<div id="security-login-building-left-roof" class="h-2 border-b-2 border-slate-700"></div>
-							<div id="security-login-building-left-center" class="bg-primary absolute inset-y-1 left-1/2 w-4 -translate-x-1/2"></div>
-							<div id="security-login-building-left-windows" class="grid flex-1 grid-cols-2 gap-4 p-3">
+							<div
+								id="security-login-building-left-roof"
+								class="h-2 border-b-2 border-slate-700"
+							></div>
+							<div
+								id="security-login-building-left-center"
+								class="absolute inset-y-1 left-1/2 w-4 -translate-x-1/2 bg-primary"
+							></div>
+							<div
+								id="security-login-building-left-windows"
+								class="grid flex-1 grid-cols-2 gap-4 p-3"
+							>
 								{#each Array.from({ length: 8 }) as _, index}
 									<div
 										id={`security-login-building-left-window-${index + 1}`}
@@ -397,18 +419,30 @@
 							</div>
 						</div>
 
-						<div id="security-login-building-center-wrap" class="relative flex flex-col items-center">
+						<div
+							id="security-login-building-center-wrap"
+							class="relative flex flex-col items-center"
+						>
 							<div
 								id="security-login-building-center-roof"
-								class="border-primary absolute -top-6 h-0 w-0 border-x-[28px] border-b-[22px] border-x-transparent"
+								class="absolute -top-6 h-0 w-0 border-x-[28px] border-b-[22px] border-primary border-x-transparent"
 							></div>
 							<div
 								id="security-login-building-center"
 								class="mt-2 flex h-32 w-28 flex-col justify-end border-2 border-slate-700 bg-white"
 							>
-								<div id="security-login-building-center-windows" class="grid grid-cols-2 gap-4 px-4 pt-7">
-									<div id="security-login-building-center-window-1" class="h-6 border border-slate-700"></div>
-									<div id="security-login-building-center-window-2" class="h-6 border border-slate-700"></div>
+								<div
+									id="security-login-building-center-windows"
+									class="grid grid-cols-2 gap-4 px-4 pt-7"
+								>
+									<div
+										id="security-login-building-center-window-1"
+										class="h-6 border border-slate-700"
+									></div>
+									<div
+										id="security-login-building-center-window-2"
+										class="h-6 border border-slate-700"
+									></div>
 								</div>
 								<div
 									id="security-login-building-center-door"
@@ -421,8 +455,14 @@
 							id="security-login-building-right"
 							class="relative flex h-52 w-32 flex-col border-2 border-slate-700 bg-white"
 						>
-							<div id="security-login-building-right-roof" class="h-6 border-b-2 border-slate-700"></div>
-							<div id="security-login-building-right-windows" class="grid flex-1 grid-cols-3 gap-3 p-3">
+							<div
+								id="security-login-building-right-roof"
+								class="h-6 border-b-2 border-slate-700"
+							></div>
+							<div
+								id="security-login-building-right-windows"
+								class="grid flex-1 grid-cols-3 gap-3 p-3"
+							>
 								{#each Array.from({ length: 12 }) as _, index}
 									<div
 										id={`security-login-building-right-window-${index + 1}`}
@@ -442,7 +482,7 @@
 							>
 								<div
 									id="security-login-car-window"
-									class="absolute left-1/2 top-1 h-3 w-8 -translate-x-1/2 bg-primary"
+									class="absolute top-1 left-1/2 h-3 w-8 -translate-x-1/2 bg-primary"
 								></div>
 							</div>
 							<div
@@ -451,7 +491,7 @@
 							></div>
 							<div
 								id="security-login-car-wheel-right"
-								class="absolute bottom-[-0.3rem] right-3 h-4 w-4 border-2 border-slate-700 bg-white"
+								class="absolute right-3 bottom-[-0.3rem] h-4 w-4 border-2 border-slate-700 bg-white"
 							></div>
 						</div>
 					</div>
@@ -459,15 +499,15 @@
 					<div id="security-login-illustration-icons" class="pointer-events-none absolute inset-0">
 						<Building2Icon
 							id="security-login-building-icon"
-							class="text-primary/10 absolute bottom-14 right-14 size-28"
+							class="absolute right-14 bottom-14 size-28 text-primary/10"
 						/>
 						<HouseIcon
 							id="security-login-house-icon"
-							class="text-primary/10 absolute bottom-24 left-14 size-20"
+							class="absolute bottom-24 left-14 size-20 text-primary/10"
 						/>
 						<CarFrontIcon
 							id="security-login-car-icon"
-							class="text-primary/10 absolute bottom-8 left-1/2 size-16 -translate-x-1/2"
+							class="absolute bottom-8 left-1/2 size-16 -translate-x-1/2 text-primary/10"
 						/>
 					</div>
 				</div>

@@ -7,6 +7,7 @@
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import posthog from 'posthog-js';
 
 	let { children } = $props();
 	let user = $state<AuthenticatedUser | null>(null);
@@ -22,6 +23,7 @@
 			}
 
 			user = await getAuthenticatedUser();
+			posthog.identify(user.email, { email: user.email, name: user.name });
 		} catch (error) {
 			console.error(getClerkErrorMessage(error));
 			await goto('/security/login');

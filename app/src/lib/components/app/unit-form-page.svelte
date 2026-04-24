@@ -21,6 +21,7 @@
 		updateUnitPrivateArea,
 		type Unit
 	} from '$lib/services/units.js';
+	import posthog from 'posthog-js';
 
 	interface Props {
 		mode: 'create' | 'edit' | 'view';
@@ -224,8 +225,14 @@
 				private_area: privateArea
 			});
 
+			posthog.capture('unit_created', {
+				condominium_code: condominiumCode,
+				group_type: selectedGroup.group_type,
+				has_private_area: privateArea !== null
+			});
 			await goto(`/g/${condominiumCode}/unidades`);
 		} catch (error) {
+			posthog.captureException(error);
 			errorMessage =
 				error instanceof Error ? error.message : 'Não foi possível cadastrar a unidade.';
 		} finally {
@@ -256,8 +263,13 @@
 				private_area: privateArea
 			});
 
+			posthog.capture('unit_private_area_updated', {
+				condominium_code: condominiumCode,
+				unit_id: unit.id
+			});
 			await goto(`/g/${condominiumCode}/unidades`);
 		} catch (error) {
+			posthog.captureException(error);
 			errorMessage =
 				error instanceof Error ? error.message : 'Não foi possível atualizar a área privativa.';
 		} finally {
@@ -277,8 +289,13 @@
 
 		try {
 			await deleteUnit(condominiumCode, unit.id);
+			posthog.capture('unit_deleted', {
+				condominium_code: condominiumCode,
+				unit_id: unit.id
+			});
 			await goto(`/g/${condominiumCode}/unidades`);
 		} catch (error) {
+			posthog.captureException(error);
 			errorMessage = error instanceof Error ? error.message : 'Não foi possível excluir a unidade.';
 		} finally {
 			isDeleting = false;
@@ -512,7 +529,7 @@
 				</Card.Root>
 			{:else if unit}
 				{#if isViewMode}
-					<UnitFinancialReport unit={unit} />
+					<UnitFinancialReport {unit} />
 				{:else}
 					<Card.Root>
 						<Card.Header>

@@ -13,8 +13,13 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-	import { createBalancete, listBalancetes, type BalanceteSummary } from '$lib/services/balancete.js';
+	import {
+		createBalancete,
+		listBalancetes,
+		type BalanceteSummary
+	} from '$lib/services/balancete.js';
 	import { cn } from '$lib/utils.js';
+	import posthog from 'posthog-js';
 
 	interface Props {
 		params: { code: string };
@@ -34,14 +39,28 @@
 	function formatMonth(month: string): string {
 		const [year, m] = month.split('-');
 		const months = [
-			'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-			'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+			'Janeiro',
+			'Fevereiro',
+			'Março',
+			'Abril',
+			'Maio',
+			'Junho',
+			'Julho',
+			'Agosto',
+			'Setembro',
+			'Outubro',
+			'Novembro',
+			'Dezembro'
 		];
 		return `${months[Number(m) - 1] ?? m} / ${year}`;
 	}
 
 	function formatCurrency(v: number): string {
-		return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+		return v.toLocaleString('pt-BR', {
+			style: 'currency',
+			currency: 'BRL',
+			minimumFractionDigits: 2
+		});
 	}
 
 	function formatClosedDate(date: string | null): string {
@@ -55,7 +74,8 @@
 		try {
 			balancetes = await listBalancetes(params.code);
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Não foi possível carregar os balancetes.';
+			errorMessage =
+				error instanceof Error ? error.message : 'Não foi possível carregar os balancetes.';
 		} finally {
 			isLoading = false;
 		}
@@ -63,10 +83,18 @@
 
 	async function handleCreate(): Promise<void> {
 		createError = '';
-		if (!newMonth) { createError = 'Selecione a competência.'; return; }
+		if (!newMonth) {
+			createError = 'Selecione a competência.';
+			return;
+		}
 		isCreating = true;
 		try {
 			const created = await createBalancete(params.code, newMonth);
+			posthog.capture('balancete_created', {
+				condominium_code: params.code,
+				month: newMonth,
+				balancete_id: created.id
+			});
 			showDialog = false;
 			await goto(`/g/${params.code}/balancete/${created.id}`);
 		} catch (error) {
@@ -76,7 +104,9 @@
 		}
 	}
 
-	onMount(async () => { await loadBalancetes(); });
+	onMount(async () => {
+		await loadBalancetes();
+	});
 </script>
 
 <svelte:head>
@@ -87,10 +117,18 @@
 	<section class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
 		<div>
 			<h1 class="text-2xl font-semibold tracking-tight text-foreground">Balancetes</h1>
-			<p class="mt-1 text-sm text-muted-foreground">Um balancete por competência mensal, com abertura e fechamento controlados.</p>
+			<p class="mt-1 text-sm text-muted-foreground">
+				Prestação de contas mensal baseada no livro-caixa, com fechamento e snapshot controlados.
+			</p>
 		</div>
 
-		<Button type="button" onclick={() => { createError = ''; showDialog = true; }}>
+		<Button
+			type="button"
+			onclick={() => {
+				createError = '';
+				showDialog = true;
+			}}
+		>
 			<PlusIcon class="mr-2 size-4" />
 			Abrir balancete
 		</Button>
@@ -102,26 +140,40 @@
 			<Dialog.Header>
 				<Dialog.Title>Abrir novo balancete</Dialog.Title>
 				<Dialog.Description>
-					Selecione a competência mensal. Só pode existir um balancete por mês.
+					Selecione a competência mensal. O balancete nasce como rascunho e pode ser fechado após
+					conferência.
 				</Dialog.Description>
 			</Dialog.Header>
 
 			<div class="flex flex-col gap-4 py-2">
 				{#if createError}
-					<div class="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+					<div
+						class="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+					>
 						{createError}
 					</div>
 				{/if}
 				<div class="space-y-2">
 					<Label for="new-month">Competência</Label>
-					<Input id="new-month" type="month" value={newMonth}
-						oninput={(e) => { newMonth = (e.currentTarget as HTMLInputElement).value; }}
+					<Input
+						id="new-month"
+						type="month"
+						value={newMonth}
+						oninput={(e) => {
+							newMonth = (e.currentTarget as HTMLInputElement).value;
+						}}
 					/>
 				</div>
 			</div>
 
 			<Dialog.Footer>
-				<Button variant="outline" onclick={() => { showDialog = false; }} disabled={isCreating}>
+				<Button
+					variant="outline"
+					onclick={() => {
+						showDialog = false;
+					}}
+					disabled={isCreating}
+				>
 					Cancelar
 				</Button>
 				<Button onclick={handleCreate} disabled={isCreating}>
@@ -139,7 +191,9 @@
 			{#if isLoading}
 				<div class="px-6 py-8 text-sm text-muted-foreground">Carregando balancetes…</div>
 			{:else if errorMessage}
-				<div class="mx-6 mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+				<div
+					class="mx-6 mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+				>
 					{errorMessage}
 				</div>
 			{:else if balancetes.length === 0}
@@ -148,7 +202,9 @@
 						title="Nenhum balancete aberto"
 						description="Crie o primeiro balancete para começar a registrar despesas e receitas do condomínio."
 						actionLabel="Abrir balancete"
-						onAction={() => { showDialog = true; }}
+						onAction={() => {
+							showDialog = true;
+						}}
 					/>
 				</div>
 			{:else}
@@ -158,8 +214,8 @@
 							<Table.Row class="hover:bg-transparent">
 								<Table.Head class="w-50 pl-6">Competência</Table.Head>
 								<Table.Head class="w-32">Status</Table.Head>
-								<Table.Head class="w-40">Total despesas</Table.Head>
-								<Table.Head class="w-40">Total receitas</Table.Head>
+								<Table.Head class="w-40">Despesas realizadas</Table.Head>
+								<Table.Head class="w-40">Receitas realizadas</Table.Head>
 								<Table.Head class="w-24">Lançamentos</Table.Head>
 								<Table.Head class="w-40 text-muted-foreground">Fechado em</Table.Head>
 								<Table.Head class="w-20 pr-6 text-right">Ações</Table.Head>
@@ -176,15 +232,22 @@
 									</Table.Cell>
 
 									<Table.Cell>
-										<span class={cn(
-											'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
-											b.status === 'open'
-												? 'bg-emerald-100 text-emerald-700'
-												: 'bg-muted text-muted-foreground'
-										)}>
-											{#if b.status === 'open'}
+										<span
+											class={cn(
+												'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
+												b.status === 'draft'
+													? 'bg-emerald-100 text-emerald-700'
+													: b.status === 'reopened'
+														? 'bg-amber-100 text-amber-700'
+														: 'bg-muted text-muted-foreground'
+											)}
+										>
+											{#if b.status === 'draft'}
 												<LockOpenIcon class="size-3" />
-												Aberto
+												Rascunho
+											{:else if b.status === 'reopened'}
+												<LockOpenIcon class="size-3" />
+												Reaberto
 											{:else}
 												<LockIcon class="size-3" />
 												Fechado
@@ -211,8 +274,15 @@
 									<Table.Cell class="pr-6 text-right">
 										<Tooltip.Root>
 											<Tooltip.Trigger>
-												<Button type="button" variant="outline" size="icon" class="size-8"
-													onclick={(e) => { e.stopPropagation(); void goto(`/g/${params.code}/balancete/${b.id}`); }}
+												<Button
+													type="button"
+													variant="outline"
+													size="icon"
+													class="size-8"
+													onclick={(e) => {
+														e.stopPropagation();
+														void goto(`/g/${params.code}/balancete/${b.id}`);
+													}}
 												>
 													<EyeIcon class="size-4" />
 												</Button>

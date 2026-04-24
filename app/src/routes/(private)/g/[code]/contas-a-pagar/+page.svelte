@@ -21,6 +21,7 @@
 	} from '$lib/services/contas-a-pagar.js';
 	import { listBankAccounts, type BankAccount } from '$lib/services/bank-accounts.js';
 	import { cn } from '$lib/utils.js';
+	import posthog from 'posthog-js';
 
 	interface Props {
 		params: { code: string };
@@ -139,10 +140,17 @@
 				payment_date: payDate,
 				bank_account_id: Number(payBankAccountId)
 			});
+			posthog.capture('conta_a_pagar_paid', {
+				condominium_code: params.code,
+				conta_id: payTarget.id,
+				value: payTarget.value,
+				category: payTarget.category
+			});
 			showPayDialog = false;
 			payTarget = null;
 			await loadData();
 		} catch (error) {
+			posthog.captureException(error);
 			payError = error instanceof Error ? error.message : 'Não foi possível registrar o pagamento.';
 		} finally {
 			isPaying = false;
@@ -160,11 +168,17 @@
 		deleteError = '';
 		isDeleting = true;
 		try {
-			await deleteConta(params.code, deleteTarget.id);
+			const deletedId = deleteTarget.id;
+			await deleteConta(params.code, deletedId);
+			posthog.capture('conta_a_pagar_deleted', {
+				condominium_code: params.code,
+				conta_id: deletedId
+			});
 			showDeleteDialog = false;
 			deleteTarget = null;
 			await loadData();
 		} catch (error) {
+			posthog.captureException(error);
 			deleteError = error instanceof Error ? error.message : 'Não foi possível excluir a conta.';
 		} finally {
 			isDeleting = false;
@@ -189,10 +203,7 @@
 				Gerencie despesas a pagar e registre os pagamentos realizados.
 			</p>
 		</div>
-		<Button
-			type="button"
-			onclick={openCreateDialog}
-		>
+		<Button type="button" onclick={openCreateDialog}>
 			<PlusIcon class="mr-2 size-4" />
 			Nova conta
 		</Button>
@@ -200,9 +211,13 @@
 
 	<!-- CREATE/EDIT DIALOG -->
 	<Dialog.Root bind:open={showFormDialog}>
-		<Dialog.Content class="max-h-[90vh] w-[calc(100vw-2rem)] max-w-none overflow-y-auto sm:max-w-[1180px]">
+		<Dialog.Content
+			class="max-h-[90vh] w-[calc(100vw-2rem)] max-w-none overflow-y-auto sm:max-w-[1180px]"
+		>
 			<Dialog.Header>
-				<Dialog.Title>{formContaId == null ? 'Nova conta a pagar' : 'Editar conta a pagar'}</Dialog.Title>
+				<Dialog.Title
+					>{formContaId == null ? 'Nova conta a pagar' : 'Editar conta a pagar'}</Dialog.Title
+				>
 				<Dialog.Description>
 					{formContaId == null
 						? 'Cadastre a despesa sem sair da listagem.'
@@ -302,7 +317,8 @@
 				<Dialog.Title>Excluir conta</Dialog.Title>
 				<Dialog.Description>
 					{#if deleteTarget}
-						Deseja excluir "<span class="font-medium text-foreground">{deleteTarget.description}</span
+						Deseja excluir "<span class="font-medium text-foreground"
+							>{deleteTarget.description}</span
 						>"? Esta ação não pode ser desfeita.
 					{/if}
 				</Dialog.Description>
@@ -337,7 +353,7 @@
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 		<!-- Status tabs -->
 		<div class="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
-			{#each ([['all', 'Todas'], ['pending', 'Pendentes'], ['paid', 'Pagas']] as [StatusFilter, string][]) as [value, label]}
+			{#each [['all', 'Todas'], ['pending', 'Pendentes'], ['paid', 'Pagas']] as [StatusFilter, string][] as [value, label]}
 				<button
 					type="button"
 					class={cn(

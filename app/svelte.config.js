@@ -9,7 +9,10 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		alias: {
-			$lib: 'src/lib/componentes',
+			$lib: 'src/lib/componentes'
+		},
+		paths: {
+			relative: false
 		}
 	}
 };

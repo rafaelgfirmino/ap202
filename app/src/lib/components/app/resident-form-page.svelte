@@ -19,6 +19,7 @@
 		type Resident
 	} from '$lib/services/residents.js';
 	import { cn } from '$lib/utils.js';
+	import posthog from 'posthog-js';
 
 	interface Props {
 		mode: 'create' | 'edit' | 'view';
@@ -48,9 +49,7 @@
 	const isViewMode = $derived(mode === 'view');
 	const isCreateMode = $derived(mode === 'create');
 
-	const selectedUnit = $derived(
-		units.find((u) => String(u.id) === formUnitKey) ?? null
-	);
+	const selectedUnit = $derived(units.find((u) => String(u.id) === formUnitKey) ?? null);
 
 	function getTypeLabel(type: 'owner' | 'tenant'): string {
 		return type === 'owner' ? 'Proprietário' : 'Inquilino';
@@ -65,8 +64,7 @@
 		const digits = value.replaceAll(/\D/g, '').slice(0, 11);
 		if (digits.length <= 3) return digits;
 		if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-		if (digits.length <= 9)
-			return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+		if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
 		return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 	}
 
@@ -168,8 +166,14 @@
 				move_in_date: formMoveInDate || null
 			});
 
+			posthog.capture('resident_created', {
+				condominium_code: condominiumCode,
+				resident_type: formType,
+				has_unit: !!selectedUnit
+			});
 			await goto(`/g/${condominiumCode}/moradores`);
 		} catch (error) {
+			posthog.captureException(error);
 			errorMessage =
 				error instanceof Error ? error.message : 'Não foi possível cadastrar o morador.';
 		} finally {
@@ -212,8 +216,14 @@
 				move_in_date: formMoveInDate || null
 			});
 
+			posthog.capture('resident_updated', {
+				condominium_code: condominiumCode,
+				resident_id: resident.id,
+				resident_type: formType
+			});
 			await goto(`/g/${condominiumCode}/moradores`);
 		} catch (error) {
+			posthog.captureException(error);
 			errorMessage =
 				error instanceof Error ? error.message : 'Não foi possível atualizar o morador.';
 		} finally {
@@ -233,10 +243,14 @@
 
 		try {
 			await deleteResident(condominiumCode, resident.id);
+			posthog.capture('resident_deleted', {
+				condominium_code: condominiumCode,
+				resident_id: resident.id
+			});
 			await goto(`/g/${condominiumCode}/moradores`);
 		} catch (error) {
-			errorMessage =
-				error instanceof Error ? error.message : 'Não foi possível excluir o morador.';
+			posthog.captureException(error);
+			errorMessage = error instanceof Error ? error.message : 'Não foi possível excluir o morador.';
 		} finally {
 			isDeleting = false;
 		}
@@ -321,10 +335,7 @@
 						</Card.Description>
 					</Card.Header>
 					<Card.Content>
-						<form
-							class="flex flex-col gap-4"
-							onsubmit={isCreateMode ? handleCreate : handleUpdate}
-						>
+						<form class="flex flex-col gap-4" onsubmit={isCreateMode ? handleCreate : handleUpdate}>
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div class="space-y-2 sm:col-span-2">
 									<Label for="resident-name">Nome completo</Label>
@@ -443,12 +454,7 @@
 							</div>
 
 							<div class="flex items-center justify-between gap-3">
-								<Button
-									type="button"
-									variant="ghost"
-									onclick={resetForm}
-									disabled={isSubmitting}
-								>
+								<Button type="button" variant="ghost" onclick={resetForm} disabled={isSubmitting}>
 									Limpar
 								</Button>
 								<Button type="submit" disabled={isSubmitting}>
@@ -502,7 +508,9 @@
 					<Card.Content>
 						<div class="flex flex-col gap-6">
 							<div class="flex items-center gap-4">
-								<div class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+								<div
+									class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+								>
 									<UserIcon class="size-7" />
 								</div>
 								<div>
@@ -522,28 +530,28 @@
 
 							<div class="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
 								<div>
-									<div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									<div class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 										CPF
 									</div>
 									<div class="mt-1 font-mono text-sm text-foreground">{resident.cpf || '—'}</div>
 								</div>
 
 								<div>
-									<div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									<div class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 										Telefone
 									</div>
 									<div class="mt-1 text-sm text-foreground">{resident.phone || '—'}</div>
 								</div>
 
 								<div>
-									<div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									<div class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 										E-mail
 									</div>
 									<div class="mt-1 text-sm text-foreground">{resident.email || '—'}</div>
 								</div>
 
 								<div>
-									<div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									<div class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 										Unidade
 									</div>
 									<div class="mt-1 text-sm text-foreground">
@@ -552,7 +560,7 @@
 								</div>
 
 								<div>
-									<div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									<div class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 										Data de entrada
 									</div>
 									<div class="mt-1 text-sm text-foreground">
@@ -561,7 +569,7 @@
 								</div>
 
 								<div>
-									<div class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+									<div class="text-xs font-medium tracking-wider text-muted-foreground uppercase">
 										Cadastrado em
 									</div>
 									<div class="mt-1 text-sm text-foreground">

@@ -9,17 +9,14 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
-	import {
-		createConta,
-		getContaAPagar,
-		updateConta
-	} from '$lib/services/contas-a-pagar.js';
+	import { createConta, getContaAPagar, updateConta } from '$lib/services/contas-a-pagar.js';
 	import { getCondominiumSettings } from '$lib/services/condominium-settings.js';
 	import type { RateioMethod } from '$lib/services/balancete.js';
 	import { listFornecedores, type Fornecedor } from '$lib/services/fornecedores.js';
 	import { listUnitGroups, type UnitGroup } from '$lib/services/unit-groups.js';
 	import { listUnits, type Unit } from '$lib/services/units.js';
 	import { cn } from '$lib/utils.js';
+	import posthog from 'posthog-js';
 
 	interface Props {
 		condominiumCode: string;
@@ -78,7 +75,15 @@
 
 	function getGroupTypeLabel(t: string): string {
 		return (
-			({ block: 'Bloco', tower: 'Torre', sector: 'Setor', court: 'Quadra', phase: 'Fase' } as Record<string, string>)[t] ?? t
+			(
+				{
+					block: 'Bloco',
+					tower: 'Torre',
+					sector: 'Setor',
+					court: 'Quadra',
+					phase: 'Fase'
+				} as Record<string, string>
+			)[t] ?? t
 		);
 	}
 
@@ -150,12 +155,30 @@
 
 	async function handleSubmit(): Promise<void> {
 		errorMessage = '';
-		if (!formDescription.trim()) { errorMessage = 'Informe a descrição.'; return; }
-		if (!formSupplierId) { errorMessage = 'Selecione o fornecedor.'; return; }
-		if (!hasValue) { errorMessage = 'Informe o valor da conta.'; return; }
-		if (!formDueDate) { errorMessage = 'Informe a data de vencimento.'; return; }
-		if (formScope === 'bloco' && !formScopeBloco) { errorMessage = 'Selecione o bloco.'; return; }
-		if (formScope === 'unidade' && !formScopeUnit) { errorMessage = 'Selecione a unidade.'; return; }
+		if (!formDescription.trim()) {
+			errorMessage = 'Informe a descrição.';
+			return;
+		}
+		if (!formSupplierId) {
+			errorMessage = 'Selecione o fornecedor.';
+			return;
+		}
+		if (!hasValue) {
+			errorMessage = 'Informe o valor da conta.';
+			return;
+		}
+		if (!formDueDate) {
+			errorMessage = 'Informe a data de vencimento.';
+			return;
+		}
+		if (formScope === 'bloco' && !formScopeBloco) {
+			errorMessage = 'Selecione o bloco.';
+			return;
+		}
+		if (formScope === 'unidade' && !formScopeUnit) {
+			errorMessage = 'Selecione a unidade.';
+			return;
+		}
 
 		isSubmitting = true;
 		const input = {
@@ -166,9 +189,7 @@
 			supplier_id: Number(formSupplierId),
 			scope: formScope,
 			scope_value:
-				formScope === 'bloco' ? formScopeBloco
-				: formScope === 'unidade' ? formScopeUnit
-				: null,
+				formScope === 'bloco' ? formScopeBloco : formScope === 'unidade' ? formScopeUnit : null,
 			rateio_method: formRateioMethod
 		};
 
@@ -177,6 +198,13 @@
 				await updateConta(condominiumCode, contaId, input);
 			} else {
 				await createConta(condominiumCode, input);
+				posthog.capture('conta_a_pagar_created', {
+					condominium_code: condominiumCode,
+					category: formCategory,
+					scope: formScope,
+					value: parsedValue,
+					rateio_method: formRateioMethod
+				});
 			}
 
 			if (onSaved) {
@@ -185,6 +213,7 @@
 				await goto(`/g/${condominiumCode}/contas-a-pagar`);
 			}
 		} catch (err) {
+			posthog.captureException(err);
 			errorMessage = err instanceof Error ? err.message : 'Não foi possível salvar a conta.';
 		} finally {
 			isSubmitting = false;
@@ -217,11 +246,7 @@
 					{isEditing ? 'Atualize os dados da conta a pagar.' : 'Cadastre uma nova despesa a pagar.'}
 				</p>
 			</div>
-			<Button
-				type="button"
-				variant="outline"
-				onclick={handleCancel}
-			>
+			<Button type="button" variant="outline" onclick={handleCancel}>
 				<ArrowLeftIcon class="mr-2 size-4" />
 				Voltar
 			</Button>
@@ -242,7 +267,9 @@
 	{:else}
 		<div class="flex flex-col gap-4">
 			{#if errorMessage}
-				<div class="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+				<div
+					class="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+				>
 					{errorMessage}
 				</div>
 			{/if}
@@ -260,7 +287,9 @@
 							rows={2}
 							placeholder="Ex.: Manutenção preventiva do elevador…"
 							disabled={isSubmitting}
-							oninput={(e) => { formDescription = (e.currentTarget as HTMLTextAreaElement).value; }}
+							oninput={(e) => {
+								formDescription = (e.currentTarget as HTMLTextAreaElement).value;
+							}}
 						/>
 					</div>
 
@@ -271,7 +300,9 @@
 							id="form-category"
 							class="flex h-9 w-full rounded-md border border-input bg-input/20 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
 							value={formCategory}
-							onchange={(e) => { formCategory = (e.currentTarget as HTMLSelectElement).value; }}
+							onchange={(e) => {
+								formCategory = (e.currentTarget as HTMLSelectElement).value;
+							}}
 						>
 							{#each CATEGORIES as cat}
 								<option value={cat}>{cat}</option>
@@ -314,7 +345,9 @@
 					<div class="space-y-2">
 						<Label for="form-value">Valor</Label>
 						<div class="relative">
-							<span class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+							<span
+								class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-muted-foreground"
+							>
 								R$
 							</span>
 							<Input
@@ -341,7 +374,9 @@
 							type="date"
 							value={formDueDate}
 							disabled={isSubmitting}
-							oninput={(e) => { formDueDate = (e.currentTarget as HTMLInputElement).value; }}
+							oninput={(e) => {
+								formDueDate = (e.currentTarget as HTMLInputElement).value;
+							}}
 						/>
 					</div>
 
@@ -350,7 +385,9 @@
 						<Label>Escopo</Label>
 						<Tabs.Root
 							value={formScope}
-							onValueChange={(v) => { formScope = v as 'geral' | 'bloco' | 'unidade'; }}
+							onValueChange={(v) => {
+								formScope = v as 'geral' | 'bloco' | 'unidade';
+							}}
 						>
 							<Tabs.List class="w-full">
 								<Tabs.Trigger value="geral" class="flex-1">Geral</Tabs.Trigger>
@@ -400,8 +437,8 @@
 							data-test="conta-a-pagar-rateio-help"
 							class="text-xs text-muted-foreground"
 						>
-							Esta conta será cobrada por {rateioMethodLabel.toLowerCase()}. Em novas contas,
-							o valor inicial vem da configuração do condomínio.
+							Esta conta será cobrada por {rateioMethodLabel.toLowerCase()}. Em novas contas, o
+							valor inicial vem da configuração do condomínio.
 						</p>
 					</div>
 
@@ -440,7 +477,9 @@
 								)}
 								value={formScopeUnit}
 								disabled={!formScopeBloco}
-								onchange={(e) => { formScopeUnit = (e.currentTarget as HTMLSelectElement).value; }}
+								onchange={(e) => {
+									formScopeUnit = (e.currentTarget as HTMLSelectElement).value;
+								}}
 							>
 								<option value="">Selecione a unidade…</option>
 								{#each filteredUnits as u (u.id)}
@@ -452,24 +491,19 @@
 
 					<!-- ACTIONS -->
 					<div class="flex items-center justify-between gap-3 pt-2 lg:col-span-2">
-						<Button
-							type="button"
-							variant="ghost"
-							disabled={isSubmitting}
-							onclick={handleCancel}
-						>
+						<Button type="button" variant="ghost" disabled={isSubmitting} onclick={handleCancel}>
 							Cancelar
 						</Button>
 						<Button
 							type="button"
-							disabled={isSubmitting || !hasValue || !formDescription.trim() || !formDueDate || !formSupplierId}
+							disabled={isSubmitting ||
+								!hasValue ||
+								!formDescription.trim() ||
+								!formDueDate ||
+								!formSupplierId}
 							onclick={handleSubmit}
 						>
-							{isSubmitting
-								? 'Salvando…'
-								: isEditing
-								? 'Salvar alterações'
-								: 'Criar conta a pagar'}
+							{isSubmitting ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Criar conta a pagar'}
 						</Button>
 					</div>
 				</Card.Content>
